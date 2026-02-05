@@ -7,6 +7,8 @@ declare module 'fastify' {
     mongo: typeof mongoose;
     config: {
       MONGODB_URI?: string;
+      JWT_PRIVATE_KEY?: string;
+      JWT_PUBLIC_KEY?: string;
     };
   }
 }

@@ -2,9 +2,11 @@ import fastify, { FastifyInstance } from 'fastify';
 import env from '@fastify/env';
 import cors from '@fastify/cors';
 import sensible from '@fastify/sensible';
+import cookie from '@fastify/cookie';
 
 import { mongoPlugin } from './plugins/mongodb';
 import { tenantPlugin } from './plugins/tenant';
+import { authRoutes } from './modules/auth/auth.routes';
 
 export async function buildApp(): Promise<FastifyInstance> {
   const app = fastify({
@@ -22,6 +24,8 @@ export async function buildApp(): Promise<FastifyInstance> {
       required: [],
       properties: {
         MONGODB_URI: { type: 'string' },
+        JWT_PRIVATE_KEY: { type: 'string' },
+        JWT_PUBLIC_KEY: { type: 'string' },
       },
     },
   });
@@ -32,10 +36,15 @@ export async function buildApp(): Promise<FastifyInstance> {
     credentials: true,
   });
 
+  // Cookie support
+  await app.register(cookie);
+
   // Core plugins
-  // MongoDB is optional 
-  // await app.register(mongoPlugin);
+  await app.register(mongoPlugin);
   await app.register(tenantPlugin);
+
+  // Routes
+  await app.register(authRoutes);
 
   // Health check
   app.get('/health', async () => {
