@@ -1,7 +1,3 @@
-/**
- * Product module type definitions
- */
-
 export interface Product {
   id: string;
   tenantId: string;
@@ -15,6 +11,9 @@ export interface Product {
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
+  finalPrice?: number;
+  discountAmount?: number;
+  appliedRules?: string[];
 }
 
 export interface CreateProductDTO {

@@ -1,6 +1,3 @@
-/**
- * Product service - Business logic layer
- */
 import { ProductModel, IProductDocument } from './product.model';
 import {
   Product,
@@ -10,16 +7,42 @@ import {
   PaginatedProducts,
   InventoryUpdateDTO,
 } from './product.types';
+import { pricingService } from '../pricing/pricing.service';
 
 export class ProductService {
-  /**
-   * Create a new product
-   */
+  private async applyDynamicPricing(
+    tenantId: string,
+    product: Product,
+    quantity: number = 1
+  ): Promise<Product> {
+    try {
+      const priceResult = await pricingService.calculatePrice(tenantId, {
+        productId: product.id,
+        quantity,
+        basePrice: product.price,
+        inventory: product.inventory,
+      });
+
+      return {
+        ...product,
+        finalPrice: priceResult.finalPrice,
+        discountAmount: priceResult.discountAmount,
+        appliedRules: priceResult.appliedRules.map((rule) => rule.ruleName),
+      };
+    } catch (error) {
+      return {
+        ...product,
+        finalPrice: product.price,
+        discountAmount: 0,
+        appliedRules: [],
+      };
+    }
+  }
+
   async createProduct(
     tenantId: string,
     data: CreateProductDTO
   ): Promise<Product> {
-    // Check if SKU already exists for this tenant
     const existingProduct = await ProductModel.findOne({
       sku: data.sku,
       tenantId,
@@ -57,7 +80,6 @@ export class ProductService {
       sortOrder = 'desc',
     } = query;
 
-    // Build filter
     const filter: any = { tenantId };
 
     if (search) {
@@ -82,11 +104,9 @@ export class ProductService {
       filter.isActive = isActive;
     }
 
-    // Build sort
     const sort: any = {};
     sort[sortBy] = sortOrder === 'asc' ? 1 : -1;
 
-    // Execute query with pagination
     const skip = (page - 1) * limit;
     const [products, totalItems] = await Promise.all([
       ProductModel.find(filter).sort(sort).skip(skip).limit(limit),
@@ -95,8 +115,12 @@ export class ProductService {
 
     const totalPages = Math.ceil(totalItems / limit);
 
+    const productsWithPricing = await Promise.all(
+      products.map((p) => this.applyDynamicPricing(tenantId, p.toProductObject(), 1))
+    );
+
     return {
-      products: products.map((p) => p.toProductObject()),
+      products: productsWithPricing,
       pagination: {
         currentPage: page,
         totalPages,
@@ -108,9 +132,6 @@ export class ProductService {
     };
   }
 
-  /**
-   * Get product by ID
-   */
   async getProductById(tenantId: string, productId: string): Promise<Product> {
     const product = await ProductModel.findOne({
       _id: productId,
@@ -121,12 +142,9 @@ export class ProductService {
       throw new Error('Product not found');
     }
 
-    return product.toProductObject();
+    return this.applyDynamicPricing(tenantId, product.toProductObject(), 1);
   }
 
-  /**
-   * Get product by SKU
-   */
   async getProductBySku(tenantId: string, sku: string): Promise<Product> {
     const product = await ProductModel.findOne({
       sku,
@@ -137,12 +155,9 @@ export class ProductService {
       throw new Error('Product not found');
     }
 
-    return product.toProductObject();
+    return this.applyDynamicPricing(tenantId, product.toProductObject(), 1);
   }
 
-  /**
-   * Update product
-   */
   async updateProduct(
     tenantId: string,
     productId: string,
@@ -168,9 +183,6 @@ export class ProductService {
     return product.toProductObject();
   }
 
-  /**
-   * Update product inventory
-   */
   async updateInventory(
     tenantId: string,
     productId: string,
@@ -201,7 +213,6 @@ export class ProductService {
         throw new Error('Invalid operation');
     }
 
-    // Ensure inventory cannot go below zero
     if (newInventory < 0) {
       throw new Error(
         `Insufficient inventory. Available: ${product.inventory}, Requested: ${update.quantity}`
@@ -214,9 +225,6 @@ export class ProductService {
     return product.toProductObject();
   }
 
-  /**
-   * Delete product
-   */
   async deleteProduct(tenantId: string, productId: string): Promise<void> {
     const result = await ProductModel.deleteOne({
       _id: productId,
@@ -228,9 +236,6 @@ export class ProductService {
     }
   }
 
-  /**
-   * Check if sufficient inventory is available
-   */
   async checkInventory(
     tenantId: string,
     productId: string,
