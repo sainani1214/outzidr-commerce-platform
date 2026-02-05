@@ -6,7 +6,9 @@ import cookie from '@fastify/cookie';
 
 import { mongoPlugin } from './plugins/mongodb';
 import { tenantPlugin } from './plugins/tenant';
+import { authGuard, requireAuth } from './plugins/authGuard';
 import { authRoutes } from './modules/auth/auth.routes';
+import { profileRoutes } from './modules/profile/profile.routes';
 
 export async function buildApp(): Promise<FastifyInstance> {
   const app = fastify({
@@ -42,9 +44,12 @@ export async function buildApp(): Promise<FastifyInstance> {
   // Core plugins
   await app.register(mongoPlugin);
   await app.register(tenantPlugin);
+  await app.register(authGuard);
+  await app.register(requireAuth);
 
   // Routes
   await app.register(authRoutes);
+  await app.register(profileRoutes);
 
   // Health check
   app.get('/health', async () => {
