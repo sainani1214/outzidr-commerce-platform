@@ -2,8 +2,21 @@
   "name": "api",
   "version": "1.0.0",
   "scripts": {
-    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
+    "dev": "tsx watch src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js"
+  },
+  "dependencies": {
+    "fastify": "^4.26.0",
+    "@fastify/cors": "^8.5.0",
+    "@fastify/env": "^4.3.0",
+    "@fastify/sensible": "^5.5.0",
+    "fastify-plugin": "^4.5.1",
+    "mongoose": "^8.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.31",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.3"
   }
 }
