@@ -1,0 +1,8 @@
+{
+  "name": "outzidr-commerce-platform",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ]
+}
