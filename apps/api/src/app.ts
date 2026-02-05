@@ -8,17 +8,17 @@ import { mongoPlugin } from './plugins/mongodb';
 import { tenantPlugin } from './plugins/tenant';
 import { authGuard, requireAuth } from './plugins/authGuard';
 import { authRoutes } from './modules/auth/auth.routes';
-import { profileRoutes } from './modules/profile/profile.routes';
+import { protectedRoutes } from './routes/protected.routes';
 
 export async function buildApp(): Promise<FastifyInstance> {
   const app = fastify({
     logger: true,
   });
 
-  // Sensible plugin for error handling
+  // Error handling
   await app.register(sensible);
 
-  // Env config
+  // Environment configuration
   await app.register(env, {
     dotenv: true,
     schema: {
@@ -32,24 +32,24 @@ export async function buildApp(): Promise<FastifyInstance> {
     },
   });
 
-  // CORS
+  // HTTP middleware
   await app.register(cors, {
     origin: true,
     credentials: true,
   });
-
-  // Cookie support
   await app.register(cookie);
 
-  // Core plugins
+  // Database & core plugins
   await app.register(mongoPlugin);
   await app.register(tenantPlugin);
   await app.register(authGuard);
   await app.register(requireAuth);
 
-  // Routes
-  await app.register(authRoutes);
-  await app.register(profileRoutes);
+  // Public routes
+  await app.register(authRoutes, { prefix: '/auth' });
+
+  // Protected routes (auth required)
+  await app.register(protectedRoutes);
 
   // Health check
   app.get('/health', async () => {

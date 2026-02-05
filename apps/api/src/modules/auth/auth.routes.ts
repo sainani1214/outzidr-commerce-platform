@@ -1,9 +1,9 @@
 import { FastifyInstance } from "fastify";
-import { authController } from "./auth.controller";
+import * as controller from "./auth.controller";
 
 export async function authRoutes(app: FastifyInstance) {
-  app.post("/auth/register", authController.register.bind(authController));
-  app.post("/auth/login", authController.login.bind(authController));
-  app.post("/auth/refresh", authController.refresh.bind(authController));
-  app.post("/auth/logout", authController.logout.bind(authController));
+  app.post("/register", controller.register);
+  app.post("/login", controller.login);
+  app.post("/refresh", controller.refresh);
+  app.post("/logout", controller.logout);
 }

@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
 import bcrypt from 'bcrypt';
 import { randomUUID } from 'crypto';
-import { User, IUserDocument } from '../user/user.model';
+import { User, IUserDocument } from '../users/user.model';
 import { RefreshToken } from './refreshToken.model';
 import { JWTPayload, RefreshTokenPayload, CreateUserDTO, LoginDTO, AuthTokens } from './auth.types';
 import { Validators, ValidationError } from '../../utils/validators';
