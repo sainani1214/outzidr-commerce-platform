@@ -269,9 +269,12 @@ http://localhost:3001/documentation
 **Quick Start with Swagger:**
 1. Start the server: `npm run dev -w api`
 2. Open browser: `http://localhost:3001/documentation`
-3. Try `/api/auth/register` endpoint (no auth required)
-4. Copy the access token from response
-5. Click "Authorize" button → Paste token → Test protected endpoints
+3. **Important:** All requests require `x-tenant-id` header
+   - **For testing:** Use any string like `tenant_1`, `acme_corp`, `test_tenant`
+   - Tenants are created automatically (soft multi-tenancy)
+4. Try `/api/auth/register` endpoint
+5. Copy the access token from response
+6. Click "Authorize" button → Paste token → Test protected endpoints
 
 ---
 
@@ -285,6 +288,10 @@ http://localhost:3001/api
 All protected endpoints require:
 - **Header**: `Authorization: Bearer <access_token>`
 - **Header**: `x-tenant-id: <tenant_id>`
+  - 🔑 **Required for all requests**
+  - Use any string (e.g., `tenant_1`, `acme_corp`, `test_tenant`)
+  - Tenants are **auto-created** on first use (soft multi-tenancy)
+  - Each tenant has isolated data (users, products, carts, orders)
 
 ### Endpoints
 
