@@ -308,7 +308,7 @@ http://localhost:3001/documentation
    - Tenants are created automatically (soft multi-tenancy)
 
 5. **Try authentication:**
-   - Use `/api/auth/register` endpoint (no auth required)
+   - Use `/api/v1/auth/register` endpoint (no auth required)
    - Copy the `accessToken` from response
    - Click "Authorize" button → Paste token → Test protected endpoints
 
@@ -322,8 +322,10 @@ http://localhost:3001/documentation
 
 ### Base URL
 ```
-http://localhost:3001/api
+http://localhost:3001/api/v1
 ```
+
+> **📌 API Versioning:** All endpoints are versioned under `/api/v1` for backward compatibility and clean API evolution.
 
 ### Authentication
 
@@ -339,55 +341,55 @@ All protected endpoints require:
 
 #### **Authentication** (No auth required)
 ```bash
-POST /api/auth/register     # Register new user
-POST /api/auth/login        # Login
-POST /api/auth/refresh      # Refresh access token
-POST /api/auth/logout       # Logout
+POST /api/v1/auth/register     # Register new user
+POST /api/v1/auth/login        # Login
+POST /api/v1/auth/refresh      # Refresh access token
+POST /api/v1/auth/logout       # Logout
 ```
 
 #### **User** (Protected)
 ```bash
-GET /api/users/me           # Get current user
+GET /api/v1/users/me           # Get current user
 ```
 
 #### **Products** (Protected)
 ```bash
-POST   /api/products                    # Create product
-GET    /api/products                    # List products (paginated)
-GET    /api/products/:id                # Get product
-GET    /api/products/sku/:sku           # Get by SKU
-PUT    /api/products/:id                # Update product
-PATCH  /api/products/:id/inventory      # Update inventory
-DELETE /api/products/:id                # Delete product
+POST   /api/v1/products                    # Create product
+GET    /api/v1/products                    # List products (paginated)
+GET    /api/v1/products/:id                # Get product
+GET    /api/v1/products/sku/:sku           # Get by SKU
+PUT    /api/v1/products/:id                # Update product
+PATCH  /api/v1/products/:id/inventory      # Update inventory
+DELETE /api/v1/products/:id                # Delete product
 ```
 
 #### **Cart** (Protected)
 ```bash
-GET    /api/cart                        # Get cart
-POST   /api/cart/items                  # Add to cart
-PUT    /api/cart/items/:productId       # Update quantity
-DELETE /api/cart/items/:productId       # Remove item
-DELETE /api/cart                        # Clear cart
+GET    /api/v1/cart                        # Get cart
+POST   /api/v1/cart/items                  # Add to cart
+PUT    /api/v1/cart/items/:productId       # Update quantity
+DELETE /api/v1/cart/items/:productId       # Remove item
+DELETE /api/v1/cart                        # Clear cart
 ```
 
 #### **Orders** (Protected)
 ```bash
-POST   /api/orders                      # Create order
-GET    /api/orders                      # List orders (paginated)
-GET    /api/orders/:id                  # Get order
-PUT    /api/orders/:id/status           # Update status
+POST   /api/v1/orders                      # Create order
+GET    /api/v1/orders                      # List orders (paginated)
+GET    /api/v1/orders/:id                  # Get order
+PUT    /api/v1/orders/:id/status           # Update status
 ```
 
 #### **Health Check** (Public)
 ```bash
-GET /health                             # Health check
+GET /health                             # Health check (unversioned)
 ```
 
 ### Example Requests
 
 **Register**
 ```bash
-curl -X POST http://localhost:3001/api/auth/register \
+curl -X POST http://localhost:3001/api/v1/auth/register \
   -H "Content-Type: application/json" \
   -H "x-tenant-id: tenant_1" \
   -d '{
@@ -399,7 +401,7 @@ curl -X POST http://localhost:3001/api/auth/register \
 
 **Login**
 ```bash
-curl -X POST http://localhost:3001/api/auth/login \
+curl -X POST http://localhost:3001/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -H "x-tenant-id: tenant_1" \
   -d '{
@@ -410,7 +412,7 @@ curl -X POST http://localhost:3001/api/auth/login \
 
 **Create Product**
 ```bash
-curl -X POST http://localhost:3001/api/products \
+curl -X POST http://localhost:3001/api/v1/products \
   -H "Authorization: Bearer <token>" \
   -H "Content-Type: application/json" \
   -H "x-tenant-id: tenant_1" \
@@ -426,7 +428,7 @@ curl -X POST http://localhost:3001/api/products \
 
 **Add to Cart**
 ```bash
-curl -X POST http://localhost:3001/api/cart/items \
+curl -X POST http://localhost:3001/api/v1/cart/items \
   -H "Authorization: Bearer <token>" \
   -H "Content-Type: application/json" \
   -H "x-tenant-id: tenant_1" \
@@ -438,7 +440,7 @@ curl -X POST http://localhost:3001/api/cart/items \
 
 **Create Order**
 ```bash
-curl -X POST http://localhost:3001/api/orders \
+curl -X POST http://localhost:3001/api/v1/orders \
   -H "Authorization: Bearer <token>" \
   -H "Content-Type: application/json" \
   -H "x-tenant-id: tenant_1" \

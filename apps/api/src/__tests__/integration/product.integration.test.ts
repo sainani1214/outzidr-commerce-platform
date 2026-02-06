@@ -12,7 +12,7 @@ describe('Product Integration Tests', () => {
     // Register and login to get access token
     await context.app.inject({
       method: 'POST',
-      url: '/api/auth/register',
+      url: '/api/v1/auth/register',
       headers: {
         'x-tenant-id': context.tenantId,
       },
@@ -26,7 +26,7 @@ describe('Product Integration Tests', () => {
 
     const loginResponse = await context.app.inject({
       method: 'POST',
-      url: '/api/auth/login',
+      url: '/api/v1/auth/login',
       headers: {
         'x-tenant-id': context.tenantId,
       },
@@ -48,7 +48,7 @@ describe('Product Integration Tests', () => {
     it('should create a new product successfully', async () => {
       const response = await context.app.inject({
         method: 'POST',
-        url: '/api/products',
+        url: '/api/v1/products',
         headers: {
           'x-tenant-id': context.tenantId,
           authorization: `Bearer ${accessToken}`,
@@ -79,7 +79,7 @@ describe('Product Integration Tests', () => {
     it('should fail without authentication', async () => {
       const response = await context.app.inject({
         method: 'POST',
-        url: '/api/products',
+        url: '/api/v1/products',
         headers: {
           'x-tenant-id': context.tenantId,
         },
@@ -96,7 +96,7 @@ describe('Product Integration Tests', () => {
     it('should fail with duplicate SKU', async () => {
       const response = await context.app.inject({
         method: 'POST',
-        url: '/api/products',
+        url: '/api/v1/products',
         headers: {
           'x-tenant-id': context.tenantId,
           authorization: `Bearer ${accessToken}`,
@@ -117,7 +117,7 @@ describe('Product Integration Tests', () => {
     it('should fail with negative price', async () => {
       const response = await context.app.inject({
         method: 'POST',
-        url: '/api/products',
+        url: '/api/v1/products',
         headers: {
           'x-tenant-id': context.tenantId,
           authorization: `Bearer ${accessToken}`,
@@ -145,7 +145,7 @@ describe('Product Integration Tests', () => {
       for (const product of products) {
         await context.app.inject({
           method: 'POST',
-          url: '/api/products',
+          url: '/api/v1/products',
           headers: {
             'x-tenant-id': context.tenantId,
             authorization: `Bearer ${accessToken}`,
@@ -158,7 +158,7 @@ describe('Product Integration Tests', () => {
     it('should list products with pagination', async () => {
       const response = await context.app.inject({
         method: 'GET',
-        url: '/api/products?page=1&limit=2',
+        url: '/api/v1/products?page=1&limit=2',
         headers: {
           'x-tenant-id': context.tenantId,
           authorization: `Bearer ${accessToken}`,
@@ -178,7 +178,7 @@ describe('Product Integration Tests', () => {
     it('should list all products without pagination', async () => {
       const response = await context.app.inject({
         method: 'GET',
-        url: '/api/products',
+        url: '/api/v1/products',
         headers: {
           'x-tenant-id': context.tenantId,
           authorization: `Bearer ${accessToken}`,
@@ -194,7 +194,7 @@ describe('Product Integration Tests', () => {
     it('should fail without authentication', async () => {
       const response = await context.app.inject({
         method: 'GET',
-        url: '/api/products',
+        url: '/api/v1/products',
         headers: {
           'x-tenant-id': context.tenantId,
         },
@@ -226,7 +226,7 @@ describe('Product Integration Tests', () => {
     it('should return 404 for non-existent product', async () => {
       const response = await context.app.inject({
         method: 'GET',
-        url: '/api/products/507f1f77bcf86cd799439011', // Valid ObjectId but doesn't exist
+        url: '/api/v1/products/507f1f77bcf86cd799439011', // Valid ObjectId but doesn't exist
         headers: {
           'x-tenant-id': context.tenantId,
           authorization: `Bearer ${accessToken}`,
@@ -239,7 +239,7 @@ describe('Product Integration Tests', () => {
     it('should return 400 for invalid product ID', async () => {
       const response = await context.app.inject({
         method: 'GET',
-        url: '/api/products/invalid-id',
+        url: '/api/v1/products/invalid-id',
         headers: {
           'x-tenant-id': context.tenantId,
           authorization: `Bearer ${accessToken}`,
@@ -276,7 +276,7 @@ describe('Product Integration Tests', () => {
     it('should fail to update non-existent product', async () => {
       const response = await context.app.inject({
         method: 'PUT',
-        url: '/api/products/507f1f77bcf86cd799439011',
+        url: '/api/v1/products/507f1f77bcf86cd799439011',
         headers: {
           'x-tenant-id': context.tenantId,
           authorization: `Bearer ${accessToken}`,
@@ -297,7 +297,7 @@ describe('Product Integration Tests', () => {
       // Create a product to delete
       const response = await context.app.inject({
         method: 'POST',
-        url: '/api/products',
+        url: '/api/v1/products',
         headers: {
           'x-tenant-id': context.tenantId,
           authorization: `Bearer ${accessToken}`,
@@ -345,7 +345,7 @@ describe('Product Integration Tests', () => {
     it('should fail to delete non-existent product', async () => {
       const response = await context.app.inject({
         method: 'DELETE',
-        url: '/api/products/507f1f77bcf86cd799439011',
+        url: '/api/v1/products/507f1f77bcf86cd799439011',
         headers: {
           'x-tenant-id': context.tenantId,
           authorization: `Bearer ${accessToken}`,
@@ -364,7 +364,7 @@ describe('Product Integration Tests', () => {
       // Create user in different tenant
       await context.app.inject({
         method: 'POST',
-        url: '/api/auth/register',
+        url: '/api/v1/auth/register',
         headers: {
           'x-tenant-id': otherTenantId,
         },
@@ -378,7 +378,7 @@ describe('Product Integration Tests', () => {
 
       const loginResponse = await context.app.inject({
         method: 'POST',
-        url: '/api/auth/login',
+        url: '/api/v1/auth/login',
         headers: {
           'x-tenant-id': otherTenantId,
         },
@@ -395,7 +395,7 @@ describe('Product Integration Tests', () => {
     it('should not see products from other tenant', async () => {
       const response = await context.app.inject({
         method: 'GET',
-        url: '/api/products',
+        url: '/api/v1/products',
         headers: {
           'x-tenant-id': otherTenantId,
           authorization: `Bearer ${otherTenantToken}`,

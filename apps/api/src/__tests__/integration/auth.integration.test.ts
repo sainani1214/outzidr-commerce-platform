@@ -16,7 +16,7 @@ describe('Auth Integration Tests', () => {
     it('should register a new user successfully', async () => {
       const response = await context.app.inject({
         method: 'POST',
-        url: '/api/auth/register',
+        url: '/api/v1/auth/register',
         headers: {
           'x-tenant-id': context.tenantId,
         },
@@ -51,7 +51,7 @@ describe('Auth Integration Tests', () => {
     it('should fail with missing tenant header', async () => {
       const response = await context.app.inject({
         method: 'POST',
-        url: '/api/auth/register',
+        url: '/api/v1/auth/register',
         payload: {
           email: 'test2@example.com',
           password: 'Test@12345',
@@ -68,7 +68,7 @@ describe('Auth Integration Tests', () => {
     it('should fail with password mismatch', async () => {
       const response = await context.app.inject({
         method: 'POST',
-        url: '/api/auth/register',
+        url: '/api/v1/auth/register',
         headers: {
           'x-tenant-id': context.tenantId,
         },
@@ -89,7 +89,7 @@ describe('Auth Integration Tests', () => {
       // Register first user
       await context.app.inject({
         method: 'POST',
-        url: '/api/auth/register',
+        url: '/api/v1/auth/register',
         headers: {
           'x-tenant-id': context.tenantId,
         },
@@ -104,7 +104,7 @@ describe('Auth Integration Tests', () => {
       // Try to register again
       const response = await context.app.inject({
         method: 'POST',
-        url: '/api/auth/register',
+        url: '/api/v1/auth/register',
         headers: {
           'x-tenant-id': context.tenantId,
         },
@@ -124,7 +124,7 @@ describe('Auth Integration Tests', () => {
     it('should fail with invalid email format', async () => {
       const response = await context.app.inject({
         method: 'POST',
-        url: '/api/auth/register',
+        url: '/api/v1/auth/register',
         headers: {
           'x-tenant-id': context.tenantId,
         },
@@ -142,7 +142,7 @@ describe('Auth Integration Tests', () => {
     it('should fail with weak password', async () => {
       const response = await context.app.inject({
         method: 'POST',
-        url: '/api/auth/register',
+        url: '/api/v1/auth/register',
         headers: {
           'x-tenant-id': context.tenantId,
         },
@@ -163,7 +163,7 @@ describe('Auth Integration Tests', () => {
       // Create a user for login tests
       await context.app.inject({
         method: 'POST',
-        url: '/api/auth/register',
+        url: '/api/v1/auth/register',
         headers: {
           'x-tenant-id': context.tenantId,
         },
@@ -179,7 +179,7 @@ describe('Auth Integration Tests', () => {
     it('should login successfully with valid credentials', async () => {
       const response = await context.app.inject({
         method: 'POST',
-        url: '/api/auth/login',
+        url: '/api/v1/auth/login',
         headers: {
           'x-tenant-id': context.tenantId,
         },
@@ -209,7 +209,7 @@ describe('Auth Integration Tests', () => {
     it('should fail with wrong password', async () => {
       const response = await context.app.inject({
         method: 'POST',
-        url: '/api/auth/login',
+        url: '/api/v1/auth/login',
         headers: {
           'x-tenant-id': context.tenantId,
         },
@@ -227,7 +227,7 @@ describe('Auth Integration Tests', () => {
     it('should fail with non-existent email', async () => {
       const response = await context.app.inject({
         method: 'POST',
-        url: '/api/auth/login',
+        url: '/api/v1/auth/login',
         headers: {
           'x-tenant-id': context.tenantId,
         },
@@ -247,7 +247,7 @@ describe('Auth Integration Tests', () => {
 
       const response = await context.app.inject({
         method: 'POST',
-        url: '/api/auth/refresh',
+        url: '/api/v1/auth/refresh',
         headers: {
           'x-tenant-id': context.tenantId,
         },
@@ -265,7 +265,7 @@ describe('Auth Integration Tests', () => {
     it('should fail with invalid refresh token', async () => {
       const response = await context.app.inject({
         method: 'POST',
-        url: '/api/auth/refresh',
+        url: '/api/v1/auth/refresh',
         headers: {
           'x-tenant-id': context.tenantId,
         },
@@ -280,7 +280,7 @@ describe('Auth Integration Tests', () => {
     it('should fail with missing refresh token', async () => {
       const response = await context.app.inject({
         method: 'POST',
-        url: '/api/auth/refresh',
+        url: '/api/v1/auth/refresh',
         headers: {
           'x-tenant-id': context.tenantId,
         },
@@ -297,7 +297,7 @@ describe('Auth Integration Tests', () => {
 
       const response = await context.app.inject({
         method: 'POST',
-        url: '/api/auth/logout',
+        url: '/api/v1/auth/logout',
         headers: {
           'x-tenant-id': context.tenantId,
         },
@@ -314,7 +314,7 @@ describe('Auth Integration Tests', () => {
     it('should fail to use refresh token after logout', async () => {
       const response = await context.app.inject({
         method: 'POST',
-        url: '/api/auth/refresh',
+        url: '/api/v1/auth/refresh',
         headers: {
           'x-tenant-id': context.tenantId,
         },
@@ -334,7 +334,7 @@ describe('Auth Integration Tests', () => {
       // Login to get fresh tokens
       const loginResponse = await context.app.inject({
         method: 'POST',
-        url: '/api/auth/login',
+        url: '/api/v1/auth/login',
         headers: {
           'x-tenant-id': context.tenantId,
         },
@@ -351,7 +351,7 @@ describe('Auth Integration Tests', () => {
     it('should get current user with valid access token', async () => {
       const response = await context.app.inject({
         method: 'GET',
-        url: '/api/users/me',
+        url: '/api/v1/users/me',
         headers: {
           'x-tenant-id': context.tenantId,
           authorization: `Bearer ${newAccessToken}`,
@@ -368,7 +368,7 @@ describe('Auth Integration Tests', () => {
     it('should fail without access token', async () => {
       const response = await context.app.inject({
         method: 'GET',
-        url: '/api/users/me',
+        url: '/api/v1/users/me',
         headers: {
           'x-tenant-id': context.tenantId,
         },
@@ -380,7 +380,7 @@ describe('Auth Integration Tests', () => {
     it('should fail with invalid access token', async () => {
       const response = await context.app.inject({
         method: 'GET',
-        url: '/api/users/me',
+        url: '/api/v1/users/me',
         headers: {
           'x-tenant-id': context.tenantId,
           authorization: 'Bearer invalid-token',

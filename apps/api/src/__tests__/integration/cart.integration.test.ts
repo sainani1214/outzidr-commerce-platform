@@ -13,7 +13,7 @@ describe('Cart Integration Tests', () => {
     // Register and login
     await context.app.inject({
       method: 'POST',
-      url: '/api/auth/register',
+      url: '/api/v1/auth/register',
       headers: {
         'x-tenant-id': context.tenantId,
       },
@@ -27,7 +27,7 @@ describe('Cart Integration Tests', () => {
 
     const loginResponse = await context.app.inject({
       method: 'POST',
-      url: '/api/auth/login',
+      url: '/api/v1/auth/login',
       headers: {
         'x-tenant-id': context.tenantId,
       },
@@ -43,7 +43,7 @@ describe('Cart Integration Tests', () => {
     // Create test products
     const product1Response = await context.app.inject({
       method: 'POST',
-      url: '/api/products',
+      url: '/api/v1/products',
       headers: {
         'x-tenant-id': context.tenantId,
         authorization: `Bearer ${accessToken}`,
@@ -59,7 +59,7 @@ describe('Cart Integration Tests', () => {
 
     const product2Response = await context.app.inject({
       method: 'POST',
-      url: '/api/products',
+      url: '/api/v1/products',
       headers: {
         'x-tenant-id': context.tenantId,
         authorization: `Bearer ${accessToken}`,
@@ -82,7 +82,7 @@ describe('Cart Integration Tests', () => {
     it('should add item to cart successfully', async () => {
       const response = await context.app.inject({
         method: 'POST',
-        url: '/api/cart/items',
+        url: '/api/v1/cart/items',
         headers: {
           'x-tenant-id': context.tenantId,
           authorization: `Bearer ${accessToken}`,
@@ -105,7 +105,7 @@ describe('Cart Integration Tests', () => {
     it('should add another item to existing cart', async () => {
       const response = await context.app.inject({
         method: 'POST',
-        url: '/api/cart/items',
+        url: '/api/v1/cart/items',
         headers: {
           'x-tenant-id': context.tenantId,
           authorization: `Bearer ${accessToken}`,
@@ -125,7 +125,7 @@ describe('Cart Integration Tests', () => {
     it('should update quantity when adding same product', async () => {
       const response = await context.app.inject({
         method: 'POST',
-        url: '/api/cart/items',
+        url: '/api/v1/cart/items',
         headers: {
           'x-tenant-id': context.tenantId,
           authorization: `Bearer ${accessToken}`,
@@ -146,7 +146,7 @@ describe('Cart Integration Tests', () => {
     it('should fail without authentication', async () => {
       const response = await context.app.inject({
         method: 'POST',
-        url: '/api/cart/items',
+        url: '/api/v1/cart/items',
         headers: {
           'x-tenant-id': context.tenantId,
         },
@@ -162,7 +162,7 @@ describe('Cart Integration Tests', () => {
     it('should fail with non-existent product', async () => {
       const response = await context.app.inject({
         method: 'POST',
-        url: '/api/cart/items',
+        url: '/api/v1/cart/items',
         headers: {
           'x-tenant-id': context.tenantId,
           authorization: `Bearer ${accessToken}`,
@@ -179,7 +179,7 @@ describe('Cart Integration Tests', () => {
     it('should fail with zero quantity', async () => {
       const response = await context.app.inject({
         method: 'POST',
-        url: '/api/cart/items',
+        url: '/api/v1/cart/items',
         headers: {
           'x-tenant-id': context.tenantId,
           authorization: `Bearer ${accessToken}`,
@@ -196,7 +196,7 @@ describe('Cart Integration Tests', () => {
     it('should fail with negative quantity', async () => {
       const response = await context.app.inject({
         method: 'POST',
-        url: '/api/cart/items',
+        url: '/api/v1/cart/items',
         headers: {
           'x-tenant-id': context.tenantId,
           authorization: `Bearer ${accessToken}`,
@@ -215,7 +215,7 @@ describe('Cart Integration Tests', () => {
     it('should get cart with calculated pricing', async () => {
       const response = await context.app.inject({
         method: 'GET',
-        url: '/api/cart',
+        url: '/api/v1/cart',
         headers: {
           'x-tenant-id': context.tenantId,
           authorization: `Bearer ${accessToken}`,
@@ -232,7 +232,7 @@ describe('Cart Integration Tests', () => {
     it('should fail without authentication', async () => {
       const response = await context.app.inject({
         method: 'GET',
-        url: '/api/cart',
+        url: '/api/v1/cart',
         headers: {
           'x-tenant-id': context.tenantId,
         },
@@ -266,7 +266,7 @@ describe('Cart Integration Tests', () => {
     it('should fail to update non-existent item', async () => {
       const response = await context.app.inject({
         method: 'PUT',
-        url: '/api/cart/items/507f1f77bcf86cd799439011',
+        url: '/api/v1/cart/items/507f1f77bcf86cd799439011',
         headers: {
           'x-tenant-id': context.tenantId,
           authorization: `Bearer ${accessToken}`,
@@ -316,7 +316,7 @@ describe('Cart Integration Tests', () => {
     it('should fail to remove non-existent item', async () => {
       const response = await context.app.inject({
         method: 'DELETE',
-        url: '/api/cart/items/507f1f77bcf86cd799439011',
+        url: '/api/v1/cart/items/507f1f77bcf86cd799439011',
         headers: {
           'x-tenant-id': context.tenantId,
           authorization: `Bearer ${accessToken}`,
@@ -331,7 +331,7 @@ describe('Cart Integration Tests', () => {
     it('should clear entire cart successfully', async () => {
       const response = await context.app.inject({
         method: 'DELETE',
-        url: '/api/cart',
+        url: '/api/v1/cart',
         headers: {
           'x-tenant-id': context.tenantId,
           authorization: `Bearer ${accessToken}`,
@@ -346,7 +346,7 @@ describe('Cart Integration Tests', () => {
     it('should return empty cart after clearing', async () => {
       const response = await context.app.inject({
         method: 'GET',
-        url: '/api/cart',
+        url: '/api/v1/cart',
         headers: {
           'x-tenant-id': context.tenantId,
           authorization: `Bearer ${accessToken}`,
@@ -367,7 +367,7 @@ describe('Cart Integration Tests', () => {
       // Create product with pricing rule
       const productResponse = await context.app.inject({
         method: 'POST',
-        url: '/api/products',
+        url: '/api/v1/products',
         headers: {
           'x-tenant-id': context.tenantId,
           authorization: `Bearer ${accessToken}`,
@@ -385,7 +385,7 @@ describe('Cart Integration Tests', () => {
     it('should apply base price correctly', async () => {
       const response = await context.app.inject({
         method: 'POST',
-        url: '/api/cart/items',
+        url: '/api/v1/cart/items',
         headers: {
           'x-tenant-id': context.tenantId,
           authorization: `Bearer ${accessToken}`,

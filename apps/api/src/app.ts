@@ -7,6 +7,7 @@ import rateLimit from '@fastify/rate-limit';
 import swagger from '@fastify/swagger';
 import swaggerUI from '@fastify/swagger-ui';
 
+import { API_BASE } from './config/api';
 import { mongoPlugin } from './plugins/mongodb';
 import { tenantPlugin } from './plugins/tenant';
 import { authGuard, requireAuth } from './plugins/authGuard';
@@ -53,8 +54,8 @@ export async function buildApp(): Promise<FastifyInstance> {
       },
       servers: [
         {
-          url: 'http://localhost:3001',
-          description: 'Development server',
+          url: 'http://localhost:3001/api/v1',
+          description: 'Development server (v1)',
         },
       ],
       tags: [
@@ -122,11 +123,11 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(authGuard);
   await app.register(requireAuth);
 
-  const API_PREFIX = '/api';
-  await app.register(authRoutes, { prefix: `${API_PREFIX}/auth` });
-  await app.register(protectedRoutes, { prefix: API_PREFIX });
+  // Register routes with versioned prefix
+  await app.register(authRoutes, { prefix: `${API_BASE}/auth` });
+  await app.register(protectedRoutes, { prefix: API_BASE });
 
-  // Health check
+  // Health check (unversioned)
   app.get('/health', async () => {
     return { status: 'ok' };
   });
