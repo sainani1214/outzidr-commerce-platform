@@ -50,12 +50,13 @@ describe('Cart Integration Tests', () => {
       },
       payload: {
         name: 'Cart Product 1',
-        basePrice: 50,
-        stock: 100,
+        description: 'Test product for cart',
+        price: 50,
+        inventory: 100,
         sku: 'CART-001',
       },
     });
-    productId1 = JSON.parse(product1Response.body)._id;
+    productId1 = JSON.parse(product1Response.body).data.id;
 
     const product2Response = await context.app.inject({
       method: 'POST',
@@ -66,12 +67,13 @@ describe('Cart Integration Tests', () => {
       },
       payload: {
         name: 'Cart Product 2',
-        basePrice: 75,
-        stock: 50,
+        description: 'Test product for cart',
+        price: 75,
+        inventory: 50,
         sku: 'CART-002',
       },
     });
-    productId2 = JSON.parse(product2Response.body)._id;
+    productId2 = JSON.parse(product2Response.body).data.id;
   });
 
   afterAll(async () => {
@@ -95,11 +97,13 @@ describe('Cart Integration Tests', () => {
 
       expect(response.statusCode).toBe(200);
       const body = JSON.parse(response.body);
-      expect(body.items).toBeDefined();
-      expect(body.items.length).toBe(1);
-      expect(body.items[0].product.toString()).toBe(productId1);
-      expect(body.items[0].quantity).toBe(2);
-      expect(body.totalAmount).toBe(100); // 50 * 2
+      expect(body.success).toBe(true);
+      expect(body.data).toBeDefined();
+      expect(body.data.items).toBeDefined();
+      expect(body.data.items.length).toBe(1);
+      expect(body.data.items[0].productId).toBe(productId1);
+      expect(body.data.items[0].quantity).toBe(2);
+      expect(body.data.total).toBe(100); // 50 * 2
     });
 
     it('should add another item to existing cart', async () => {
@@ -118,8 +122,8 @@ describe('Cart Integration Tests', () => {
 
       expect(response.statusCode).toBe(200);
       const body = JSON.parse(response.body);
-      expect(body.items.length).toBe(2);
-      expect(body.totalAmount).toBe(175); // (50 * 2) + (75 * 1)
+      expect(body.data.items.length).toBe(2);
+      expect(body.data.total).toBe(175); // (50 * 2) + (75 * 1)
     });
 
     it('should update quantity when adding same product', async () => {
@@ -138,9 +142,9 @@ describe('Cart Integration Tests', () => {
 
       expect(response.statusCode).toBe(200);
       const body = JSON.parse(response.body);
-      const product1Item = body.items.find((item: any) => item.product.toString() === productId1);
+      const product1Item = body.data.items.find((item: any) => item.productId === productId1);
       expect(product1Item.quantity).toBe(3); // 2 + 1
-      expect(body.totalAmount).toBe(225); // (50 * 3) + (75 * 1)
+      expect(body.data.total).toBe(225); // (50 * 3) + (75 * 1)
     });
 
     it('should fail without authentication', async () => {
@@ -224,9 +228,10 @@ describe('Cart Integration Tests', () => {
 
       expect(response.statusCode).toBe(200);
       const body = JSON.parse(response.body);
-      expect(body.items).toBeDefined();
-      expect(body.items.length).toBeGreaterThan(0);
-      expect(body.totalAmount).toBeGreaterThan(0);
+      expect(body.data).toBeDefined();
+      expect(body.data.items).toBeDefined();
+      expect(body.data.items.length).toBeGreaterThan(0);
+      expect(body.data.total).toBeGreaterThan(0);
     });
 
     it('should fail without authentication', async () => {
@@ -258,9 +263,9 @@ describe('Cart Integration Tests', () => {
 
       expect(response.statusCode).toBe(200);
       const body = JSON.parse(response.body);
-      const product1Item = body.items.find((item: any) => item.product.toString() === productId1);
+      const product1Item = body.data.items.find((item: any) => item.productId === productId1);
       expect(product1Item.quantity).toBe(5);
-      expect(body.totalAmount).toBe(325); // (50 * 5) + (75 * 1)
+      expect(body.data.total).toBe(325); // (50 * 5) + (75 * 1)
     });
 
     it('should fail to update non-existent item', async () => {
@@ -338,9 +343,7 @@ describe('Cart Integration Tests', () => {
         },
       });
 
-      expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
-      expect(body.message).toContain('cleared');
+      expect(response.statusCode).toBe(204);
     });
 
     it('should return empty cart after clearing', async () => {
@@ -355,8 +358,8 @@ describe('Cart Integration Tests', () => {
 
       expect(response.statusCode).toBe(200);
       const body = JSON.parse(response.body);
-      expect(body.items.length).toBe(0);
-      expect(body.totalAmount).toBe(0);
+      expect(body.data.items.length).toBe(0);
+      expect(body.data.total).toBe(0);
     });
   });
 
@@ -374,12 +377,13 @@ describe('Cart Integration Tests', () => {
         },
         payload: {
           name: 'Pricing Test Product',
-          basePrice: 100,
-          stock: 100,
+          description: 'Test product for pricing',
+          price: 100,
+          inventory: 100,
           sku: 'PRICING-001',
         },
       });
-      pricingProductId = JSON.parse(productResponse.body)._id;
+      pricingProductId = JSON.parse(productResponse.body).data.id;
     });
 
     it('should apply base price correctly', async () => {
@@ -398,7 +402,7 @@ describe('Cart Integration Tests', () => {
 
       expect(response.statusCode).toBe(200);
       const body = JSON.parse(response.body);
-      expect(body.totalAmount).toBe(200); // 100 * 2
+      expect(body.data.total).toBe(200); // 100 * 2
     });
   });
 });

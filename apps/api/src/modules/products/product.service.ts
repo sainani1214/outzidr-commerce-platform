@@ -8,6 +8,7 @@ import {
   InventoryUpdateDTO,
 } from './product.types';
 import { pricingService } from '../pricing/pricing.service';
+import { NotFoundError, ConflictError, BadRequestError } from '../../utils/errors';
 
 export class ProductService {
   private async applyDynamicPricing(
@@ -49,7 +50,7 @@ export class ProductService {
     });
 
     if (existingProduct) {
-      throw new Error(`Product with SKU '${data.sku}' already exists`);
+      throw new ConflictError(`Product with SKU '${data.sku}' already exists`);
     }
 
     const product = new ProductModel({
@@ -139,7 +140,7 @@ export class ProductService {
     });
 
     if (!product) {
-      throw new Error('Product not found');
+      throw new NotFoundError('Product not found');
     }
 
     return this.applyDynamicPricing(tenantId, product.toProductObject(), 1);
@@ -152,7 +153,7 @@ export class ProductService {
     });
 
     if (!product) {
-      throw new Error('Product not found');
+      throw new NotFoundError('Product not found');
     }
 
     return this.applyDynamicPricing(tenantId, product.toProductObject(), 1);
@@ -169,12 +170,12 @@ export class ProductService {
     });
 
     if (!product) {
-      throw new Error('Product not found');
+      throw new NotFoundError('Product not found');
     }
 
     // Validate inventory cannot go below zero
     if (data.inventory !== undefined && data.inventory < 0) {
-      throw new Error('Inventory cannot be negative');
+      throw new BadRequestError('Inventory cannot be negative');
     }
 
     Object.assign(product, data);
@@ -194,7 +195,7 @@ export class ProductService {
     });
 
     if (!product) {
-      throw new Error('Product not found');
+      throw new NotFoundError('Product not found');
     }
 
     let newInventory: number;
@@ -210,11 +211,11 @@ export class ProductService {
         newInventory = update.quantity;
         break;
       default:
-        throw new Error('Invalid operation');
+        throw new BadRequestError('Invalid operation');
     }
 
     if (newInventory < 0) {
-      throw new Error(
+      throw new BadRequestError(
         `Insufficient inventory. Available: ${product.inventory}, Requested: ${update.quantity}`
       );
     }
@@ -232,7 +233,7 @@ export class ProductService {
     });
 
     if (result.deletedCount === 0) {
-      throw new Error('Product not found');
+      throw new NotFoundError('Product not found');
     }
   }
 
@@ -247,7 +248,7 @@ export class ProductService {
     });
 
     if (!product) {
-      throw new Error('Product not found');
+      throw new NotFoundError('Product not found');
     }
 
     return product.inventory >= quantity;

@@ -56,8 +56,8 @@ describe('Product Integration Tests', () => {
         payload: {
           name: 'Test Product',
           description: 'A test product description',
-          basePrice: 99.99,
-          stock: 100,
+          price: 99.99,
+          inventory: 100,
           category: 'Electronics',
           sku: 'TEST-001',
         },
@@ -65,15 +65,16 @@ describe('Product Integration Tests', () => {
 
       expect(response.statusCode).toBe(201);
       const body = JSON.parse(response.body);
-      expect(body._id).toBeDefined();
-      expect(body.name).toBe('Test Product');
-      expect(body.basePrice).toBe(99.99);
-      expect(body.stock).toBe(100);
-      expect(body.category).toBe('Electronics');
-      expect(body.sku).toBe('TEST-001');
-      expect(body.tenantId).toBe(context.tenantId);
+      expect(body.data).toBeDefined();
+      expect(body.data.id).toBeDefined();
+      expect(body.data.name).toBe('Test Product');
+      expect(body.data.price).toBe(99.99);
+      expect(body.data.inventory).toBe(100);
+      expect(body.data.category).toBe('Electronics');
+      expect(body.data.sku).toBe('TEST-001');
+      expect(body.data.tenantId).toBe(context.tenantId);
 
-      productId = body._id;
+      productId = body.data.id;
     });
 
     it('should fail without authentication', async () => {
@@ -85,8 +86,8 @@ describe('Product Integration Tests', () => {
         },
         payload: {
           name: 'Unauthorized Product',
-          basePrice: 50,
-          stock: 10,
+          price: 50,
+          inventory: 10,
         },
       });
 
@@ -103,8 +104,8 @@ describe('Product Integration Tests', () => {
         },
         payload: {
           name: 'Duplicate SKU Product',
-          basePrice: 49.99,
-          stock: 50,
+          price: 49.99,
+          inventory: 50,
           sku: 'TEST-001', // Same SKU as before
         },
       });
@@ -124,8 +125,8 @@ describe('Product Integration Tests', () => {
         },
         payload: {
           name: 'Negative Price Product',
-          basePrice: -10,
-          stock: 10,
+          price: -10,
+          inventory: 10,
         },
       });
 
@@ -137,9 +138,9 @@ describe('Product Integration Tests', () => {
     beforeAll(async () => {
       // Create multiple products for listing
       const products = [
-        { name: 'Product 1', basePrice: 10, stock: 5, sku: 'PROD-001' },
-        { name: 'Product 2', basePrice: 20, stock: 10, sku: 'PROD-002' },
-        { name: 'Product 3', basePrice: 30, stock: 15, sku: 'PROD-003' },
+        { name: 'Product 1', price: 10, inventory: 5, sku: 'PROD-001' },
+        { name: 'Product 2', price: 20, inventory: 10, sku: 'PROD-002' },
+        { name: 'Product 3', price: 30, inventory: 15, sku: 'PROD-003' },
       ];
 
       for (const product of products) {
@@ -167,8 +168,8 @@ describe('Product Integration Tests', () => {
 
       expect(response.statusCode).toBe(200);
       const body = JSON.parse(response.body);
-      expect(body.products).toBeDefined();
-      expect(body.products.length).toBeLessThanOrEqual(2);
+      expect(body.data).toBeDefined();
+      expect(body.data.length).toBeLessThanOrEqual(2);
       expect(body.pagination).toBeDefined();
       expect(body.pagination.page).toBe(1);
       expect(body.pagination.limit).toBe(2);
@@ -187,8 +188,8 @@ describe('Product Integration Tests', () => {
 
       expect(response.statusCode).toBe(200);
       const body = JSON.parse(response.body);
-      expect(body.products).toBeDefined();
-      expect(body.products.length).toBeGreaterThan(0);
+      expect(body.data).toBeDefined();
+      expect(body.data.length).toBeGreaterThan(0);
     });
 
     it('should fail without authentication', async () => {
@@ -219,8 +220,8 @@ describe('Product Integration Tests', () => {
 
       expect(response.statusCode).toBe(200);
       const body = JSON.parse(response.body);
-      expect(body._id).toBe(productId);
-      expect(body.name).toBe('Test Product');
+      expect(body.data.id).toBe(productId);
+      expect(body.data.name).toBe('Test Product');
     });
 
     it('should return 404 for non-existent product', async () => {
@@ -261,16 +262,16 @@ describe('Product Integration Tests', () => {
         },
         payload: {
           name: 'Updated Product Name',
-          basePrice: 149.99,
-          stock: 75,
+          price: 149.99,
+          inventory: 75,
         },
       });
 
       expect(response.statusCode).toBe(200);
       const body = JSON.parse(response.body);
-      expect(body.name).toBe('Updated Product Name');
-      expect(body.basePrice).toBe(149.99);
-      expect(body.stock).toBe(75);
+      expect(body.data.name).toBe('Updated Product Name');
+      expect(body.data.price).toBe(149.99);
+      expect(body.data.inventory).toBe(75);
     });
 
     it('should fail to update non-existent product', async () => {
@@ -304,14 +305,14 @@ describe('Product Integration Tests', () => {
         },
         payload: {
           name: 'Product to Delete',
-          basePrice: 25,
-          stock: 5,
+          price: 25,
+          inventory: 5,
           sku: 'DELETE-001',
         },
       });
 
       const body = JSON.parse(response.body);
-      deleteProductId = body._id;
+      deleteProductId = body.data.id;
     });
 
     it('should delete a product successfully', async () => {
@@ -404,7 +405,7 @@ describe('Product Integration Tests', () => {
 
       expect(response.statusCode).toBe(200);
       const body = JSON.parse(response.body);
-      expect(body.products.length).toBe(0); // Should have no products
+      expect(body.data.length).toBe(0); // Should have no products
     });
 
     it('should not access product from other tenant', async () => {
