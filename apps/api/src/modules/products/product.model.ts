@@ -1,6 +1,3 @@
-/**
- * Product MongoDB model
- */
 import mongoose, { Document, Schema } from 'mongoose';
 import { Product } from './product.types';
 

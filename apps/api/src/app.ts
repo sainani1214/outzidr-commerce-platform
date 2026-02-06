@@ -45,11 +45,10 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(authGuard);
   await app.register(requireAuth);
 
-  // Public routes
-  await app.register(authRoutes, { prefix: '/auth' });
-
-  // Protected routes (auth required)
-  await app.register(protectedRoutes, { prefix: '/api' });
+  // API routes
+  const API_PREFIX = '/api';
+  await app.register(authRoutes, { prefix: `${API_PREFIX}/auth` });
+  await app.register(protectedRoutes, { prefix: API_PREFIX });
 
   // Health check
   app.get('/health', async () => {

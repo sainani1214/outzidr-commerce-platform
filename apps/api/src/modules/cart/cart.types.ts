@@ -1,3 +1,8 @@
+export enum CartStatus {
+  ACTIVE = 'ACTIVE',
+  CHECKED_OUT = 'CHECKED_OUT',
+}
+
 export interface CartItem {
   productId: string;
   sku: string;
@@ -19,6 +24,7 @@ export interface Cart {
   subtotal: number;
   totalDiscount: number;
   total: number;
+  status: CartStatus;
   createdAt: Date;
   updatedAt: Date;
 }

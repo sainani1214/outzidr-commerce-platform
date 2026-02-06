@@ -1,5 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
-import { Cart } from './cart.types';
+import { Cart, CartStatus } from './cart.types';
 
 export interface ICartItemDocument {
   productId: string;
@@ -21,6 +21,7 @@ export interface ICartDocument extends Document {
   subtotal: number;
   totalDiscount: number;
   total: number;
+  status: CartStatus;
   toCartObject(): Cart;
 }
 
@@ -48,6 +49,11 @@ const CartSchema = new Schema<ICartDocument>(
     subtotal: { type: Number, default: 0 },
     totalDiscount: { type: Number, default: 0 },
     total: { type: Number, default: 0 },
+    status: { 
+      type: String, 
+      enum: Object.values(CartStatus), 
+      default: CartStatus.ACTIVE 
+    },
   },
   {
     timestamps: true,
@@ -76,6 +82,7 @@ CartSchema.methods.toCartObject = function (): Cart {
     subtotal: this.subtotal,
     totalDiscount: this.totalDiscount,
     total: this.total,
+    status: this.status,
     createdAt: this.createdAt,
     updatedAt: this.updatedAt,
   };

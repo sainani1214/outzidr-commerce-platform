@@ -1,5 +1,5 @@
 import { CartModel, ICartDocument } from './cart.model';
-import { Cart, AddToCartDTO, UpdateCartItemDTO, CartSummary } from './cart.types';
+import { Cart, AddToCartDTO, UpdateCartItemDTO, CartSummary, CartStatus } from './cart.types';
 import { productService } from '../products/product.service';
 import { pricingService } from '../pricing/pricing.service';
 
@@ -12,7 +12,7 @@ export class CartService {
   }
 
   async getCart(tenantId: string, userId: string): Promise<Cart> {
-    let cart = await CartModel.findOne({ tenantId, userId });
+    let cart = await CartModel.findOne({ tenantId, userId, status: CartStatus.ACTIVE });
 
     if (!cart) {
       cart = new CartModel({
@@ -23,6 +23,7 @@ export class CartService {
         subtotal: 0,
         totalDiscount: 0,
         total: 0,
+        status: CartStatus.ACTIVE,
       });
       await cart.save();
     }
