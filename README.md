@@ -37,6 +37,8 @@ A headless commerce platform supporting:
 - **Database**: MongoDB with Mongoose
 - **Authentication**: JWT (jsonwebtoken) with RS256
 - **Password Hashing**: bcrypt
+- **API Documentation**: Swagger/OpenAPI 3.0 (`@fastify/swagger`, `@fastify/swagger-ui`)
+- **Rate Limiting**: `@fastify/rate-limit`
 
 ### Testing
 - **Framework**: Jest + ts-jest
@@ -249,6 +251,29 @@ Server will start at `http://localhost:3001`
 ---
 
 ## 📚 API Documentation
+
+### 🔷 Interactive Swagger UI
+
+**Access the interactive API documentation:**
+
+```
+http://localhost:3001/documentation
+```
+
+**Features:**
+- ✅ **Try it out** - Test all endpoints directly from the browser
+- ✅ **Full schema validation** - See request/response examples
+- ✅ **JWT Authentication** - Authorize once, use for all requests
+- ✅ **20 endpoints** documented with OpenAPI 3.0 spec
+
+**Quick Start with Swagger:**
+1. Start the server: `npm run dev -w api`
+2. Open browser: `http://localhost:3001/documentation`
+3. Try `/api/auth/register` endpoint (no auth required)
+4. Copy the access token from response
+5. Click "Authorize" button → Paste token → Test protected endpoints
+
+---
 
 ### Base URL
 ```

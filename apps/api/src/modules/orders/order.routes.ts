@@ -5,12 +5,13 @@ import {
   getOrderById,
   updateOrderStatus,
 } from './order.controller';
+import { OrderSchemas } from '../../schemas';
 
 const orderRoutes: FastifyPluginAsync = async (app) => {
-  app.post('/', createOrder);
-  app.get('/', getOrders);
-  app.get('/:id', getOrderById);
-  app.put('/:id/status', updateOrderStatus);
+  app.post('/', { schema: OrderSchemas.createOrderSchema }, createOrder);
+  app.get('/', { schema: OrderSchemas.getOrdersSchema }, getOrders);
+  app.get('/:id', { schema: OrderSchemas.getOrderByIdSchema }, getOrderById);
+  app.put('/:id/status', { schema: OrderSchemas.updateOrderStatusSchema }, updateOrderStatus);
 };
 
 export default orderRoutes;

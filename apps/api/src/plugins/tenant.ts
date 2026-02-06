@@ -3,8 +3,14 @@ import { FastifyInstance, FastifyRequest } from 'fastify';
 
 export const tenantPlugin = fp(async (app: FastifyInstance) => {
   app.addHook('preHandler', async (request: FastifyRequest, reply) => {
-    // Skip tenant validation for health check endpoint
-    if (request.url === '/health') {
+    // Skip tenant validation for health check and documentation endpoints
+    if (
+      request.url === '/health' ||
+      request.url.startsWith('/documentation') ||
+      request.url.startsWith('/docs') ||
+      request.url.includes('swagger') ||
+      request.url.includes('openapi')
+    ) {
       request.tenantId = 'system';
       return;
     }
