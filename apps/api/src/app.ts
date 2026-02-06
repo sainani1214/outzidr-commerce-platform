@@ -3,6 +3,7 @@ import env from '@fastify/env';
 import cors from '@fastify/cors';
 import sensible from '@fastify/sensible';
 import cookie from '@fastify/cookie';
+import rateLimit from '@fastify/rate-limit';
 
 import { mongoPlugin } from './plugins/mongodb';
 import { tenantPlugin } from './plugins/tenant';
@@ -39,13 +40,28 @@ export async function buildApp(): Promise<FastifyInstance> {
   });
   await app.register(cookie);
 
+  // Rate limiting
+  await app.register(rateLimit, {
+    max: 300,
+    timeWindow: '15 minutes',
+    keyGenerator: (req) => {
+      return `${req.ip}:${req.headers['x-tenant-id'] || 'unknown'}`;
+    },
+    errorResponseBuilder: (req, context) => {
+      return {
+        success: false,
+        error: 'Too many requests',
+        retryAfter: context.after,
+      };
+    },
+  });
+
   // Database & core plugins
   await app.register(mongoPlugin);
   await app.register(tenantPlugin);
   await app.register(authGuard);
   await app.register(requireAuth);
 
-  // API routes
   const API_PREFIX = '/api';
   await app.register(authRoutes, { prefix: `${API_PREFIX}/auth` });
   await app.register(protectedRoutes, { prefix: API_PREFIX });

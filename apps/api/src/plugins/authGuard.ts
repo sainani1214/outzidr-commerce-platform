@@ -7,7 +7,14 @@ export const authGuard = fp(async (app: FastifyInstance) => {
   app.decorateRequest('user', null);
 
   app.addHook('preHandler', async (request) => {
-    const token = request.cookies.accessToken;
+    let token = request.cookies.accessToken;
+    
+    if (!token) {
+      const authHeader = request.headers.authorization;
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        token = authHeader.substring(7);
+      }
+    }
     
     if (!token) {
       request.user = null;
@@ -18,14 +25,12 @@ export const authGuard = fp(async (app: FastifyInstance) => {
       const payload = verifyToken<JWTPayload>(token);
 
       if (payload.tenantId !== request.tenantId) {
-        app.log.warn({ tokenTenant: payload.tenantId, requestTenant: request.tenantId }, 'Tenant mismatch');
         request.user = null;
         return;
       }
 
       request.user = payload;
     } catch (err) {
-      app.log.debug({ err }, 'Token verification failed');
       request.user = null;
     }
   });
