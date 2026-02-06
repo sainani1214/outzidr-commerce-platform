@@ -4,7 +4,8 @@ import { randomUUID } from 'crypto';
 import { User, IUserDocument } from '../users/user.model';
 import { RefreshToken } from './refreshToken.model';
 import { JWTPayload, RefreshTokenPayload, CreateUserDTO, LoginDTO, AuthTokens } from './auth.types';
-import { Validators, ValidationError } from '../../utils/validators';
+import { Validators } from '../../utils/validators';
+import { ConflictError, UnauthorizedError } from '../../utils/errors';
 
 const ACCESS_TOKEN_TTL = "15m";
 const REFRESH_TOKEN_TTL = "7d";
@@ -44,7 +45,7 @@ class AuthService {
     });
 
     if (existingUser) {
-      throw new ValidationError('User with this email already exists');
+      throw new ConflictError('User with this email already exists');
     }
 
     const passwordHash = await bcrypt.hash(dto.password, SALT_ROUNDS);
@@ -64,12 +65,12 @@ class AuthService {
     });
 
     if (!user) {
-      throw new ValidationError('Invalid credentials');
+      throw new UnauthorizedError('Invalid credentials');
     }
 
     const isValidPassword = await bcrypt.compare(dto.password, user.passwordHash);
     if (!isValidPassword) {
-      throw new ValidationError('Invalid credentials');
+      throw new UnauthorizedError('Invalid credentials');
     }
 
     const tokens = await this.generateTokens(user);
@@ -83,7 +84,7 @@ class AuthService {
     });
 
     if (!stored || stored.expiresAt < new Date()) {
-      throw new ValidationError('Invalid or expired refresh token');
+      throw new UnauthorizedError('Invalid or expired refresh token');
     }
 
     stored.revoked = true;

@@ -51,8 +51,8 @@ describe('Order Integration Tests', () => {
       },
       payload: {
         name: 'Order Product 1',
-        basePrice: 100,
-        stock: 50,
+        price: 100,
+        inventory: 50,
         sku: 'ORDER-001',
       },
     });
@@ -67,8 +67,8 @@ describe('Order Integration Tests', () => {
       },
       payload: {
         name: 'Order Product 2',
-        basePrice: 150,
-        stock: 30,
+        price: 150,
+        inventory: 30,
         sku: 'ORDER-002',
       },
     });
@@ -398,8 +398,8 @@ describe('Order Integration Tests', () => {
         },
         payload: {
           name: 'Low Stock Product',
-          basePrice: 50,
-          stock: 2,
+          price: 50,
+          inventory: 2,
           sku: 'LOW-STOCK-001',
         },
       });

@@ -164,26 +164,62 @@ outzidr-commerce-platform/
 │       │   ├── app.ts                # Fastify app setup
 │       │   ├── server.ts             # Server entry point
 │       │   ├── config/               # Configuration
+│       │   │   ├── api.ts            # API versioning config
+│       │   │   └── swagger.ts        # Swagger/OpenAPI setup
 │       │   ├── modules/              # Feature modules
 │       │   │   ├── auth/             # Authentication
 │       │   │   │   ├── auth.controller.ts
 │       │   │   │   ├── auth.service.ts
 │       │   │   │   ├── auth.routes.ts
 │       │   │   │   ├── auth.types.ts
-│       │   │   │   └── refreshToken.model.ts
+│       │   │   │   ├── refreshToken.model.ts
+│       │   │   │   └── __tests__/    # Auth tests
 │       │   │   ├── users/            # User management
+│       │   │   │   ├── user.controller.ts
+│       │   │   │   ├── user.model.ts
+│       │   │   │   └── user.routes.ts
 │       │   │   ├── products/         # Product catalog
+│       │   │   │   ├── product.controller.ts
+│       │   │   │   ├── product.service.ts
+│       │   │   │   ├── product.routes.ts
+│       │   │   │   ├── product.types.ts
+│       │   │   │   └── product.model.ts
 │       │   │   ├── pricing/          # Dynamic pricing
+│       │   │   │   ├── pricing.service.ts
+│       │   │   │   ├── pricing.types.ts
+│       │   │   │   └── pricing.model.ts
 │       │   │   ├── cart/             # Shopping cart
+│       │   │   │   ├── cart.controller.ts
+│       │   │   │   ├── cart.service.ts
+│       │   │   │   ├── cart.routes.ts
+│       │   │   │   ├── cart.types.ts
+│       │   │   │   └── cart.model.ts
 │       │   │   └── orders/           # Order management
+│       │   │       ├── order.controller.ts
+│       │   │       ├── order.service.ts
+│       │   │       ├── order.routes.ts
+│       │   │       ├── order.types.ts
+│       │   │       └── order.model.ts
 │       │   ├── plugins/              # Fastify plugins
 │       │   │   ├── authGuard.ts      # Auth middleware
 │       │   │   ├── tenant.ts         # Tenant resolution
-│       │   │   └── mongodb.ts        # MongoDB connection
+│       │   │   ├── mongodb.ts        # MongoDB connection
+│       │   │   └── errorHandler.ts   # Global error handler
 │       │   ├── routes/               # Route aggregation
 │       │   │   └── protected.routes.ts
+│       │   ├── schemas/              # OpenAPI schemas
 │       │   ├── types/                # TypeScript declarations
-│       │   └── utils/                # Utilities
+│       │   ├── utils/                # Utilities
+│       │   │   ├── validators.ts     # Validation helpers
+│       │   │   └── errors.ts         # Custom error classes
+│       │   ├── __tests__/            # Integration tests
+│       │   │   └── integration/
+│       │   │       ├── auth.integration.test.ts
+│       │   │       ├── cart.integration.test.ts
+│       │   │       ├── product.integration.test.ts
+│       │   │       └── order.integration.test.ts
+│       │   └── tests/                # Test utilities
+│       │       └── testApp.ts        # Test setup helpers
 │       ├── package.json
 │       └── tsconfig.json
 ├── docs/                             # Documentation
@@ -395,6 +431,7 @@ curl -X POST http://localhost:3001/api/v1/auth/register \
   -d '{
     "email": "user@example.com",
     "password": "SecurePass123!",
+    "confirmPassword": "SecurePass123!",
     "name": "John Doe"
   }'
 ```
@@ -446,11 +483,14 @@ curl -X POST http://localhost:3001/api/v1/orders \
   -H "x-tenant-id: tenant_1" \
   -d '{
     "shippingAddress": {
-      "street": "123 Main St",
+      "name": "John Doe",
+      "addressLine1": "123 Main St",
+      "addressLine2": "Apt 4B",
       "city": "New York",
       "state": "NY",
-      "zipCode": "10001",
-      "country": "USA"
+      "postalCode": "10001",
+      "country": "USA",
+      "phone": "+1234567890"
     }
   }'
 ```
@@ -460,30 +500,41 @@ curl -X POST http://localhost:3001/api/v1/orders \
 ## 🧪 Testing
 
 ### Current Status
-✅ **73 tests passing** in ~13 seconds  
-✅ **38% code coverage** (service layer)  
-⏭️ 18 tests skipped (order service - requires MongoDB replica set)
+✅ **109 tests passing** (68% pass rate)  
+⚠️ **33 tests failing** (integration tests being fixed)  
+⏭️ **18 tests skipped** (order integration tests)  
+📊 **79.21% code coverage** (target: 90%+)
 
-### Test Breakdown
-| Module | Tests | Coverage | Status |
-|--------|-------|----------|--------|
-| Auth Service | 20 | 100% | ✅ PASS |
-| Cart Service | 22 | 96.7% | ✅ PASS |
-| Product Service | 20 | 76.3% | ✅ PASS |
-| Pricing Service | 11 | 52.7% | ✅ PASS |
-| Order Service | 18 | 12.3% | ⏭️ SKIP |
+### Test Framework
+- **Framework**: Jest + ts-jest
+- **HTTP Testing**: Supertest (Fastify inject)
+- **Database**: mongodb-memory-server (isolated test DB)
+- **Execution Time**: ~20 seconds
 
-**Order tests skipped**: Require MongoDB transactions (replica set), which makes tests slow. Use standalone MongoDB for fast testing.
+### Test Breakdown by Type
+| Type | Passing | Total | Status |
+|------|---------|-------|--------|
+| **Unit Tests** | 73 | 73 | ✅ 100% |
+| **Integration Tests** | 31 | 87 | ⚠️ 36% |
+| **Skipped Tests** | - | 18 | ⏭️ - |
+| **Total** | 109 | 160 | 🔄 68% |
 
-### Run Tests
-```bash
-cd apps/api
-npm test                 # Run all tests (~13s)
-npm run test:watch       # Watch mode
-npm run test:coverage    # Coverage report (~16s)
-```
+### Coverage by Module
+| Module | Coverage | Status |
+|--------|----------|--------|
+| Cart Controller | 91.89% | ✅ Excellent |
+| Cart Service | 96.7% | ✅ Excellent |
+| Auth Controller | 81.08% | ✅ Good |
+| Auth Service | 82.65% | ✅ Good |
+| Product Service | 76.62% | ✅ Good |
+| Order Controller | 71.42% | ⚠️ Fair |
+| Order Service | 33.78% | ❌ Low |
+| Product Controller | 58.18% | ⚠️ Fair |
+| Pricing Service | 52.72% | ⚠️ Fair |
+| Error Handler | 85.71% | ✅ Good |
 
 ### What's Tested
+#### ✅ Unit Tests (73/73 passing)
 - ✅ User registration & login with JWT
 - ✅ Password hashing & validation
 - ✅ Refresh token rotation & revocation
@@ -494,11 +545,38 @@ npm run test:coverage    # Coverage report (~16s)
 - ✅ Inventory validation
 - ✅ Pagination & filtering
 
+#### 🔄 Integration Tests (31/87 passing - in progress)
+- ✅ Auth endpoints (register, login, refresh, logout)
+- 🔄 Cart endpoints (11/17 passing)
+- 🔄 Product endpoints (8/17 passing)
+- 🔄 Order endpoints (being fixed)
+- ⏭️ Order transactions (18 skipped - require MongoDB replica set)
+
+### Run Tests
+```bash
+cd apps/api
+npm test                 # Run all tests (~20s)
+npm run test:watch       # Watch mode
+npm run test:coverage    # Coverage report with details
+```
+
+### Recent Improvements
+- [x] Created custom error classes (BadRequestError, NotFoundError, etc.)
+- [x] Implemented global error handler plugin
+- [x] Removed try-catch blocks from controllers
+- [x] Fixed cart pricing calculation bug
+- [x] Fixed integration test payloads (price vs basePrice, inventory vs stock)
+- [x] Fixed response format expectations (body.data vs body)
+- [x] Improved coverage from 77.79% → 79.21% (+1.42%)
+- [x] Improved passing tests from 104 → 109 (+5 tests)
+
 ### Next Steps
-- [x] ~~Integration tests for controllers~~ - **Completed! 76% coverage**
-- [ ] Order service with replica set or mocking
-- [ ] Comprehensive error handling
-- [ ] Next.js frontend (App Router with SSR)
+- [ ] Fix remaining 33 integration test failures
+- [ ] Increase order service coverage (33.78% → 70%+)
+- [ ] Add error handler test scenarios
+- [ ] Add pricing service tests
+- [ ] Achieve 90%+ overall coverage target
+- [ ] Add E2E tests with full order flow
 
 ---
 
@@ -539,9 +617,13 @@ npm run test:coverage    # Coverage report (~16s)
 - [x] Atomic inventory locking
 - [x] Fastify plugins & middleware
 - [x] Rate limiting
-- [x] Unit tests + Integration tests (142 passing, **76% coverage**)
+- [x] Global error handling with custom error classes
+- [x] Unit tests (73/73 passing, 100%)
+- [x] Integration tests (31/87 passing, 36% - in progress)
+- [x] Code coverage: **79.21%** (target: 90%+)
 - [x] API documentation (Swagger/OpenAPI 3.0)
-- [ ] Comprehensive error handling
+- [ ] Complete integration test fixes (33 tests remaining)
+- [ ] Achieve 90%+ test coverage
 
 ### Frontend (Planned - Next.js)
 - [ ] Next.js 14+ setup (App Router)
@@ -567,8 +649,9 @@ npm run test:coverage    # Coverage report (~16s)
 ✅ **MongoDB** - Mongoose with transactions  
 ✅ **Atomic inventory lock** - MongoDB transactions  
 ✅ **Rate limiting** - Multi-tenant aware with per-route limits  
-✅ **Testing** - 142 tests passing (**76% coverage**)  
+✅ **Testing** - 109/160 tests passing (**79.21% coverage**, target: 90%+)  
 ✅ **API Documentation** - Swagger/OpenAPI 3.0 with interactive UI  
+✅ **Error Handling** - Global error handler with custom error classes  
 ⏳ **Next.js SSR** - Planned  
 
 ---

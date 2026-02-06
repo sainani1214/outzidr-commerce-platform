@@ -7,6 +7,7 @@ import rateLimit from '@fastify/rate-limit';
 
 import { API_BASE } from './config/api';
 import { registerSwagger } from './config/swagger';
+import { errorHandler } from './plugins/errorHandler';
 import { mongoPlugin } from './plugins/mongodb';
 import { tenantPlugin } from './plugins/tenant';
 import { authGuard, requireAuth } from './plugins/authGuard';
@@ -18,7 +19,10 @@ export async function buildApp(): Promise<FastifyInstance> {
     logger: true,
   });
 
-  // Error handling
+  // Global error handler 
+  await app.register(errorHandler);
+
+  // Error handling utilities
   await app.register(sensible);
 
   // Environment configuration
@@ -45,21 +49,23 @@ export async function buildApp(): Promise<FastifyInstance> {
   // Swagger/OpenAPI Documentation
   await registerSwagger(app);
 
-  // Rate limiting
-  await app.register(rateLimit, {
-    max: 300,
-    timeWindow: '15 minutes',
-    keyGenerator: (req) => {
-      return `${req.ip}:${req.headers['x-tenant-id'] || 'unknown'}`;
-    },
-    errorResponseBuilder: (req, context) => {
-      return {
-        success: false,
-        error: 'Too many requests',
-        retryAfter: context.after,
-      };
-    },
-  });
+  // Rate limiting (disabled in test environment)
+  if (process.env.NODE_ENV !== 'test') {
+    await app.register(rateLimit, {
+      max: 300,
+      timeWindow: '15 minutes',
+      keyGenerator: (req) => {
+        return `${req.ip}:${req.headers['x-tenant-id'] || 'unknown'}`;
+      },
+      errorResponseBuilder: (req, context) => {
+        return {
+          success: false,
+          error: 'Too many requests',
+          retryAfter: context.after,
+        };
+      },
+    });
+  }
 
   // Database & core plugins
   await app.register(mongoPlugin);

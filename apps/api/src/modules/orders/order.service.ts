@@ -1,4 +1,4 @@
-import { OrderModel, IOrderDocument } from './order.model';
+import { OrderModel } from './order.model';
 import {
   Order,
   CreateOrderDTO,
@@ -7,12 +7,12 @@ import {
   PaginatedOrders,
   OrderStatus,
 } from './order.types';
-import { cartService } from '../cart/cart.service';
 import { productService } from '../products/product.service';
 import { CartModel } from '../cart/cart.model';
 import { ProductModel } from '../products/product.model';
 import { CartStatus } from '../cart/cart.types';
 import mongoose from 'mongoose';
+import { NotFoundError, BadRequestError } from '../../utils/errors';
 
 export class OrderService {
   private async generateOrderNumber(tenantId: string): Promise<string> {
@@ -40,7 +40,7 @@ export class OrderService {
       }).session(session);
 
       if (!cart || !cart.items || cart.items.length === 0) {
-        throw new Error('Cart is empty or already checked out');
+        throw new BadRequestError('Cart is empty or already checked out');
       }
 
       for (const item of cart.items) {
@@ -50,11 +50,11 @@ export class OrderService {
         }).session(session);
 
         if (!product || !product.isActive) {
-          throw new Error(`Product ${item.name} is no longer available`);
+          throw new BadRequestError(`Product ${item.name} is no longer available`);
         }
 
         if (product.inventory < item.quantity) {
-          throw new Error(
+          throw new BadRequestError(
             `Insufficient inventory for ${item.name}. Only ${product.inventory} available`
           );
         }
@@ -99,7 +99,7 @@ export class OrderService {
         ).session(session);
 
         if (updateResult.matchedCount === 0) {
-          throw new Error(
+          throw new BadRequestError(
             `Failed to update inventory for ${item.name}. Insufficient stock or product not found.`
           );
         }
@@ -170,7 +170,7 @@ export class OrderService {
     });
 
     if (!order) {
-      throw new Error('Order not found');
+      throw new NotFoundError('Order not found');
     }
 
     return order.toOrderObject();
@@ -187,19 +187,19 @@ export class OrderService {
     });
 
     if (!order) {
-      throw new Error('Order not found');
+      throw new NotFoundError('Order not found');
     }
 
     if (order.status === OrderStatus.CANCELLED) {
-      throw new Error('Cannot update status of cancelled order');
+      throw new BadRequestError('Cannot update status of cancelled order');
     }
 
     if (order.status === OrderStatus.DELIVERED && data.status !== OrderStatus.CANCELLED) {
-      throw new Error('Cannot update status of delivered order');
+      throw new BadRequestError('Cannot update status of delivered order');
     }
 
     if (data.status === OrderStatus.CANCELLED && order.status !== OrderStatus.PLACED) {
-      throw new Error('Only placed orders can be cancelled');
+      throw new BadRequestError('Only placed orders can be cancelled');
     }
 
     if (data.status === OrderStatus.CANCELLED) {

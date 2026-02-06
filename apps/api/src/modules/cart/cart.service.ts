@@ -2,6 +2,7 @@ import { CartModel, ICartDocument } from './cart.model';
 import { Cart, AddToCartDTO, UpdateCartItemDTO, CartSummary, CartStatus } from './cart.types';
 import { productService } from '../products/product.service';
 import { pricingService } from '../pricing/pricing.service';
+import { NotFoundError, BadRequestError } from '../../utils/errors';
 
 export class CartService {
   private calculateCartTotals(cart: ICartDocument): void {
@@ -35,11 +36,11 @@ export class CartService {
     const product = await productService.getProductById(tenantId, data.productId);
 
     if (!product.isActive) {
-      throw new Error('Product is not available');
+      throw new BadRequestError('Product is not available');
     }
 
     if (product.inventory < data.quantity) {
-      throw new Error(`Only ${product.inventory} items available in stock`);
+      throw new BadRequestError(`Only ${product.inventory} items available in stock`);
     }
 
     let cart = await CartModel.findOne({ tenantId, userId });
@@ -49,7 +50,7 @@ export class CartService {
     }
 
     const existingItemIndex = cart.items.findIndex(
-      (item) => item.productId === data.productId
+      (item) => item.productId.toString() === data.productId.toString()
     );
 
     const priceResult = await pricingService.calculatePrice(tenantId, {
@@ -64,7 +65,7 @@ export class CartService {
       const newQuantity = existingItem.quantity + data.quantity;
 
       if (product.inventory < newQuantity) {
-        throw new Error(`Only ${product.inventory} items available in stock`);
+        throw new BadRequestError(`Only ${product.inventory} items available in stock`);
       }
 
       const updatedPriceResult = await pricingService.calculatePrice(tenantId, {
@@ -75,21 +76,21 @@ export class CartService {
       });
 
       cart.items[existingItemIndex].quantity = newQuantity;
-      cart.items[existingItemIndex].finalPrice = updatedPriceResult.finalPrice;
-      cart.items[existingItemIndex].discountAmount = updatedPriceResult.discountAmount;
+      cart.items[existingItemIndex].finalPrice = updatedPriceResult.finalPrice / newQuantity;
+      cart.items[existingItemIndex].discountAmount = updatedPriceResult.discountAmount / newQuantity;
       cart.items[existingItemIndex].appliedRules = updatedPriceResult.appliedRules.map(r => r.ruleName);
-      cart.items[existingItemIndex].subtotal = updatedPriceResult.finalPrice * newQuantity;
+      cart.items[existingItemIndex].subtotal = updatedPriceResult.finalPrice;
     } else {
       cart.items.push({
-        productId: product.id,
+        productId: data.productId,
         sku: product.sku,
         name: product.name,
         quantity: data.quantity,
         basePrice: product.price,
-        finalPrice: priceResult.finalPrice,
-        discountAmount: priceResult.discountAmount,
+        finalPrice: priceResult.finalPrice / data.quantity,
+        discountAmount: priceResult.discountAmount / data.quantity,
         appliedRules: priceResult.appliedRules.map(r => r.ruleName),
-        subtotal: priceResult.finalPrice * data.quantity,
+        subtotal: priceResult.finalPrice,
       });
     }
 
@@ -108,23 +109,23 @@ export class CartService {
     const cart = await CartModel.findOne({ tenantId, userId });
 
     if (!cart) {
-      throw new Error('Cart not found');
+      throw new NotFoundError('Cart not found');
     }
 
-    const itemIndex = cart.items.findIndex((item) => item.productId === productId);
+    const itemIndex = cart.items.findIndex((item) => item.productId.toString() === productId.toString());
 
     if (itemIndex === -1) {
-      throw new Error('Item not found in cart');
+      throw new NotFoundError('Item not found in cart');
     }
 
     if (data.quantity <= 0) {
-      throw new Error('Quantity must be greater than 0');
+      throw new BadRequestError('Quantity must be greater than 0');
     }
 
     const product = await productService.getProductById(tenantId, productId);
 
     if (product.inventory < data.quantity) {
-      throw new Error(`Only ${product.inventory} items available in stock`);
+      throw new BadRequestError(`Only ${product.inventory} items available in stock`);
     }
 
     const priceResult = await pricingService.calculatePrice(tenantId, {
@@ -135,10 +136,10 @@ export class CartService {
     });
 
     cart.items[itemIndex].quantity = data.quantity;
-    cart.items[itemIndex].finalPrice = priceResult.finalPrice;
-    cart.items[itemIndex].discountAmount = priceResult.discountAmount;
+    cart.items[itemIndex].finalPrice = priceResult.finalPrice / data.quantity;
+    cart.items[itemIndex].discountAmount = priceResult.discountAmount / data.quantity;
     cart.items[itemIndex].appliedRules = priceResult.appliedRules.map(r => r.ruleName);
-    cart.items[itemIndex].subtotal = priceResult.finalPrice * data.quantity;
+    cart.items[itemIndex].subtotal = priceResult.finalPrice;
 
     this.calculateCartTotals(cart);
     await cart.save();
@@ -150,13 +151,13 @@ export class CartService {
     const cart = await CartModel.findOne({ tenantId, userId });
 
     if (!cart) {
-      throw new Error('Cart not found');
+      throw new NotFoundError('Cart not found');
     }
 
-    const itemIndex = cart.items.findIndex((item) => item.productId === productId);
+    const itemIndex = cart.items.findIndex((item) => item.productId.toString() === productId.toString());
 
     if (itemIndex === -1) {
-      throw new Error('Item not found in cart');
+      throw new NotFoundError('Item not found in cart');
     }
 
     cart.items.splice(itemIndex, 1);
