@@ -49,7 +49,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(authRoutes, { prefix: '/auth' });
 
   // Protected routes (auth required)
-  await app.register(protectedRoutes);
+  await app.register(protectedRoutes, { prefix: '/api' });
 
   // Health check
   app.get('/health', async () => {
