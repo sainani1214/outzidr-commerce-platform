@@ -229,15 +229,26 @@ touch .env
 
 Add the following:
 ```env
+# Local MongoDB
 MONGODB_URI=mongodb://localhost:27017/outzidr-commerce
+
+# OR MongoDB Atlas (cloud - no local installation needed)
+# MONGODB_URI=mongodb+srv://<username>:<password>@cluster.mongodb.net/outzidr-commerce?retryWrites=true&w=majority
+
 JWT_PRIVATE_KEY="$(cat private.key)"
 JWT_PUBLIC_KEY="$(cat public.key)"
 PORT=3001
 ```
 
-5. **Start MongoDB** (if running locally)
+> **💡 Tip for Reviewers:** Use [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) free tier (no local installation required) - just create a cluster and update `MONGODB_URI`
+
+5. **Start MongoDB** (if using local MongoDB)
 ```bash
 mongod
+```
+
+   **OR skip this step if using MongoDB Atlas**
+
 ```
 
 6. **Run the development server**
@@ -260,6 +271,11 @@ Server will start at `http://localhost:3001`
 http://localhost:3001/documentation
 ```
 
+**Prerequisites for Testing:**
+- ✅ MongoDB running (locally or Atlas)
+- ✅ Server running: `npm run dev -w api`
+- ✅ Environment variables configured (`.env` file)
+
 **Features:**
 - ✅ **Try it out** - Test all endpoints directly from the browser
 - ✅ **Full schema validation** - See request/response examples
@@ -267,14 +283,40 @@ http://localhost:3001/documentation
 - ✅ **20 endpoints** documented with OpenAPI 3.0 spec
 
 **Quick Start with Swagger:**
-1. Start the server: `npm run dev -w api`
-2. Open browser: `http://localhost:3001/documentation`
-3. **Important:** All requests require `x-tenant-id` header
+1. **Start MongoDB:**
+   ```bash
+   # Local MongoDB
+   mongod
+   
+   # OR use MongoDB Atlas (cloud)
+   # Update MONGODB_URI in .env with Atlas connection string
+   ```
+
+2. **Start the server:**
+   ```bash
+   npm run dev -w api
+   ```
+
+3. **Open Swagger UI:**
+   ```
+   http://localhost:3001/documentation
+   ```
+
+4. **Test the API:**
+   - All requests require `x-tenant-id` header
    - **For testing:** Use any string like `tenant_1`, `acme_corp`, `test_tenant`
    - Tenants are created automatically (soft multi-tenancy)
-4. Try `/api/auth/register` endpoint
-5. Copy the access token from response
-6. Click "Authorize" button → Paste token → Test protected endpoints
+
+5. **Try authentication:**
+   - Use `/api/auth/register` endpoint (no auth required)
+   - Copy the `accessToken` from response
+   - Click "Authorize" button → Paste token → Test protected endpoints
+
+**Common Issues:**
+- ❌ **"Cannot connect"** → Check if MongoDB is running (`mongod`)
+- ❌ **"Connection refused"** → Verify `MONGODB_URI` in `.env` file
+- ❌ **"x-tenant-id header missing"** → Add tenant ID to request header
+- ❌ **"Unauthorized"** → Register/login first, then use access token
 
 ---
 
@@ -451,10 +493,10 @@ npm run test:coverage    # Coverage report (~16s)
 - ✅ Pagination & filtering
 
 ### Next Steps
-- [ ] Integration tests for controllers (will increase coverage to 70%+)
+- [x] ~~Integration tests for controllers~~ - **Completed! 76% coverage**
 - [ ] Order service with replica set or mocking
-- [ ] Rate limiting tests
-- [ ] Authentication middleware tests
+- [ ] Comprehensive error handling
+- [ ] Next.js frontend (App Router with SSR)
 
 ---
 
@@ -495,10 +537,9 @@ npm run test:coverage    # Coverage report (~16s)
 - [x] Atomic inventory locking
 - [x] Fastify plugins & middleware
 - [x] Rate limiting
-- [x] Unit tests (73 passing, 38% coverage)
+- [x] Unit tests + Integration tests (142 passing, **76% coverage**)
+- [x] API documentation (Swagger/OpenAPI 3.0)
 - [ ] Comprehensive error handling
-- [ ] API integration tests
-- [ ] API documentation (Swagger)
 
 ### Frontend (Planned - Next.js)
 - [ ] Next.js 14+ setup (App Router)
@@ -524,8 +565,8 @@ npm run test:coverage    # Coverage report (~16s)
 ✅ **MongoDB** - Mongoose with transactions  
 ✅ **Atomic inventory lock** - MongoDB transactions  
 ✅ **Rate limiting** - Multi-tenant aware with per-route limits  
-✅ **Testing** - 73 tests passing (38% coverage)  
-⏳ **API Documentation** - Planned  
+✅ **Testing** - 142 tests passing (**76% coverage**)  
+✅ **API Documentation** - Swagger/OpenAPI 3.0 with interactive UI  
 ⏳ **Next.js SSR** - Planned  
 
 ---

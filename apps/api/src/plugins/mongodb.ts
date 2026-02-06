@@ -9,6 +9,13 @@ export const mongoPlugin = fp(async (app: FastifyInstance) => {
     throw new Error('MONGODB_URI is not defined in environment variables');
   }
 
+  // Skip connection if mongoose is already connected (e.g., in tests)
+  if (mongoose.connection.readyState === 1) {
+    app.log.info('MongoDB already connected (using existing connection)');
+    app.decorate('mongo', mongoose);
+    return;
+  }
+
   await mongoose.connect(uri);
 
   app.log.info('MongoDB connected');
