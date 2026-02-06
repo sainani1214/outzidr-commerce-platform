@@ -9,7 +9,6 @@ export interface IOrderItemDocument {
   basePrice: number;
   finalPrice: number;
   discountAmount: number;
-  appliedRules?: string[];
   subtotal: number;
 }
 
@@ -47,7 +46,6 @@ const OrderItemSchema = new Schema<IOrderItemDocument>(
     basePrice: { type: Number, required: true },
     finalPrice: { type: Number, required: true },
     discountAmount: { type: Number, default: 0 },
-    appliedRules: [{ type: String }],
     subtotal: { type: Number, required: true },
   },
   { _id: false }
@@ -80,7 +78,7 @@ const OrderSchema = new Schema<IOrderDocument>(
     status: {
       type: String,
       enum: Object.values(OrderStatus),
-      default: OrderStatus.PENDING,
+      default: OrderStatus.PLACED,
     },
     shippingAddress: { type: ShippingAddressSchema, required: true },
   },
@@ -107,7 +105,6 @@ OrderSchema.methods.toOrderObject = function (): Order {
       basePrice: item.basePrice,
       finalPrice: item.finalPrice,
       discountAmount: item.discountAmount,
-      appliedRules: item.appliedRules,
       subtotal: item.subtotal,
     })),
     totalItems: this.totalItems,

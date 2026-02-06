@@ -1,4 +1,4 @@
-import { OrderModel } from './order.model';
+import { OrderModel, IOrderDocument } from './order.model';
 import {
   Order,
   CreateOrderDTO,
@@ -9,6 +9,10 @@ import {
 } from './order.types';
 import { cartService } from '../cart/cart.service';
 import { productService } from '../products/product.service';
+import { CartModel } from '../cart/cart.model';
+import { ProductModel } from '../products/product.model';
+import { CartStatus } from '../cart/cart.types';
+import mongoose from 'mongoose';
 
 export class OrderService {
   private async generateOrderNumber(tenantId: string): Promise<string> {
@@ -25,63 +29,94 @@ export class OrderService {
     userId: string,
     data: CreateOrderDTO
   ): Promise<Order> {
-    const cart = await cartService.getCart(tenantId, userId);
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-    if (!cart.items || cart.items.length === 0) {
-      throw new Error('Cart is empty');
-    }
+    try {
+      const cart = await CartModel.findOne({
+        tenantId,
+        userId,
+        status: CartStatus.ACTIVE,
+      }).session(session);
 
-    for (const item of cart.items) {
-      const product = await productService.getProductById(tenantId, item.productId);
-
-      if (!product.isActive) {
-        throw new Error(`Product ${product.name} is no longer available`);
+      if (!cart || !cart.items || cart.items.length === 0) {
+        throw new Error('Cart is empty or already checked out');
       }
 
-      if (product.inventory < item.quantity) {
-        throw new Error(
-          `Insufficient inventory for ${product.name}. Only ${product.inventory} available`
-        );
+      for (const item of cart.items) {
+        const product = await ProductModel.findOne({
+          _id: item.productId,
+          tenantId,
+        }).session(session);
+
+        if (!product || !product.isActive) {
+          throw new Error(`Product ${item.name} is no longer available`);
+        }
+
+        if (product.inventory < item.quantity) {
+          throw new Error(
+            `Insufficient inventory for ${item.name}. Only ${product.inventory} available`
+          );
+        }
       }
-    }
 
-    const orderNumber = await this.generateOrderNumber(tenantId);
+      const orderNumber = await this.generateOrderNumber(tenantId);
 
-    const order = new OrderModel({
-      tenantId,
-      userId,
-      orderNumber,
-      items: cart.items.map((item) => ({
-        productId: item.productId,
-        sku: item.sku,
-        name: item.name,
-        quantity: item.quantity,
-        basePrice: item.basePrice,
-        finalPrice: item.finalPrice,
-        discountAmount: item.discountAmount,
-        appliedRules: item.appliedRules,
-        subtotal: item.subtotal,
-      })),
-      totalItems: cart.totalItems,
-      subtotal: cart.subtotal,
-      totalDiscount: cart.totalDiscount,
-      total: cart.total,
-      status: OrderStatus.PENDING,
-      shippingAddress: data.shippingAddress,
-    });
-
-    await order.save();
-
-    for (const item of cart.items) {
-      await productService.updateInventory(tenantId, item.productId, {
-        quantity: item.quantity,
-        operation: 'subtract',
+      const order = new OrderModel({
+        tenantId,
+        userId,
+        orderNumber,
+        items: cart.items.map((item) => ({
+          productId: item.productId,
+          sku: item.sku,
+          name: item.name,
+          quantity: item.quantity,
+          basePrice: item.basePrice,
+          finalPrice: item.finalPrice,
+          discountAmount: item.discountAmount,
+          subtotal: item.subtotal,
+        })),
+        totalItems: cart.totalItems,
+        subtotal: cart.subtotal,
+        totalDiscount: cart.totalDiscount,
+        total: cart.total,
+        status: OrderStatus.PLACED,
+        shippingAddress: data.shippingAddress,
       });
+
+      await order.save({ session });
+
+      for (const item of cart.items) {
+        const updateResult = await ProductModel.updateOne(
+          {
+            _id: item.productId,
+            tenantId,
+            inventory: { $gte: item.quantity },
+          },
+          {
+            $inc: { inventory: -item.quantity },
+          }
+        ).session(session);
+
+        if (updateResult.matchedCount === 0) {
+          throw new Error(
+            `Failed to update inventory for ${item.name}. Insufficient stock or product not found.`
+          );
+        }
+      }
+
+      cart.status = CartStatus.CHECKED_OUT;
+      await cart.save({ session });
+
+      await session.commitTransaction();
+      session.endSession();
+
+      return order.toOrderObject();
+    } catch (error) {
+      await session.abortTransaction();
+      session.endSession();
+      throw error;
     }
-
-    await cartService.clearCart(tenantId, userId);
-
-    return order.toOrderObject();
   }
 
   async getOrders(
@@ -163,8 +198,8 @@ export class OrderService {
       throw new Error('Cannot update status of delivered order');
     }
 
-    if (data.status === OrderStatus.CANCELLED && order.status !== OrderStatus.PENDING) {
-      throw new Error('Only pending orders can be cancelled');
+    if (data.status === OrderStatus.CANCELLED && order.status !== OrderStatus.PLACED) {
+      throw new Error('Only placed orders can be cancelled');
     }
 
     if (data.status === OrderStatus.CANCELLED) {

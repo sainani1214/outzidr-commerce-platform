@@ -1,5 +1,5 @@
 export enum OrderStatus {
-  PENDING = 'PENDING',
+  PLACED = 'PLACED',
   CONFIRMED = 'CONFIRMED',
   PROCESSING = 'PROCESSING',
   SHIPPED = 'SHIPPED',
@@ -15,7 +15,6 @@ export interface OrderItem {
   basePrice: number;
   finalPrice: number;
   discountAmount: number;
-  appliedRules?: string[];
   subtotal: number;
 }
 

@@ -30,17 +30,36 @@ export async function register(
       tenantId: request.tenantId,
     });
 
+    
+    const { tokens } = await authService.login({
+      email,
+      password,
+      tenantId: request.tenantId,
+    });
+
     const userData = user.toUserObject();
 
-    return reply.code(201).send({
-      success: true,
-      user: {
-        id: userData.id,
-        email: userData.email,
-        name: userData.name,
-        createdAt: userData.createdAt,
-      },
-    });
+    return reply
+      .code(201)
+      .setCookie("accessToken", tokens.accessToken, {
+        ...COOKIE_OPTIONS,
+        maxAge: 15 * 60,
+      })
+      .setCookie("refreshToken", tokens.refreshToken, {
+        ...COOKIE_OPTIONS,
+        maxAge: 7 * 24 * 60 * 60,
+      })
+      .send({
+        success: true,
+        user: {
+          id: userData.id,
+          email: userData.email,
+          name: userData.name,
+          createdAt: userData.createdAt,
+        },
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
+      });
   } catch (error) {
     if (error instanceof ValidationError) {
       return reply.code(400).send({
@@ -86,6 +105,8 @@ export async function login(
           email: userData.email,
           name: userData.name,
         },
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
       });
   } catch (error) {
     if (error instanceof ValidationError) {
