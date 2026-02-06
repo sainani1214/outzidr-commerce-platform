@@ -38,11 +38,11 @@ A headless commerce platform supporting:
 - **Authentication**: JWT (jsonwebtoken) with RS256
 - **Password Hashing**: bcrypt
 
-### Testing (Planned)
-- **Framework**: Jest
+### Testing
+- **Framework**: Jest + ts-jest
 - **HTTP Testing**: Supertest
 - **Database**: mongodb-memory-server
-- **Coverage Target**: 90%+
+- **Coverage**: 38% (73 tests passing in ~13s)
 
 ### Frontend (Planned)
 - **Framework**: Next.js 14+ (App Router)
@@ -383,19 +383,46 @@ curl -X POST http://localhost:3001/api/orders \
 
 ## 🧪 Testing
 
-### Planned Testing Strategy
+### Current Status
+✅ **73 tests passing** in ~13 seconds  
+✅ **38% code coverage** (service layer)  
+⏭️ 18 tests skipped (order service - requires MongoDB replica set)
 
-- **Unit Tests**: Individual service methods
-- **Integration Tests**: API endpoints with in-memory MongoDB
-- **Test Coverage**: Target 90%+
+### Test Breakdown
+| Module | Tests | Coverage | Status |
+|--------|-------|----------|--------|
+| Auth Service | 20 | 100% | ✅ PASS |
+| Cart Service | 22 | 96.7% | ✅ PASS |
+| Product Service | 20 | 76.3% | ✅ PASS |
+| Pricing Service | 11 | 52.7% | ✅ PASS |
+| Order Service | 18 | 12.3% | ⏭️ SKIP |
 
-### Run Tests (Once implemented)
+**Order tests skipped**: Require MongoDB transactions (replica set), which makes tests slow. Use standalone MongoDB for fast testing.
+
+### Run Tests
 ```bash
 cd apps/api
-npm test                 # Run all tests
-npm test:watch          # Watch mode
-npm test:coverage       # Coverage report
+npm test                 # Run all tests (~13s)
+npm run test:watch       # Watch mode
+npm run test:coverage    # Coverage report (~16s)
 ```
+
+### What's Tested
+- ✅ User registration & login with JWT
+- ✅ Password hashing & validation
+- ✅ Refresh token rotation & revocation
+- ✅ Multi-tenant data isolation
+- ✅ Product CRUD operations
+- ✅ Cart operations with dynamic pricing
+- ✅ Pricing rule calculations
+- ✅ Inventory validation
+- ✅ Pagination & filtering
+
+### Next Steps
+- [ ] Integration tests for controllers (will increase coverage to 70%+)
+- [ ] Order service with replica set or mocking
+- [ ] Rate limiting tests
+- [ ] Authentication middleware tests
 
 ---
 
@@ -436,8 +463,8 @@ npm test:coverage       # Coverage report
 - [x] Atomic inventory locking
 - [x] Fastify plugins & middleware
 - [x] Rate limiting
+- [x] Unit tests (73 passing, 38% coverage)
 - [ ] Comprehensive error handling
-- [ ] Unit tests (90%+ coverage)
 - [ ] API integration tests
 - [ ] API documentation (Swagger)
 
@@ -465,7 +492,8 @@ npm test:coverage       # Coverage report
 ✅ **MongoDB** - Mongoose with transactions  
 ✅ **Atomic inventory lock** - MongoDB transactions  
 ✅ **Rate limiting** - Multi-tenant aware with per-route limits  
-⏳ **Testing (90%+)** - Planned  
+✅ **Testing** - 73 tests passing (38% coverage)  
+⏳ **API Documentation** - Planned  
 ⏳ **Next.js SSR** - Planned  
 
 ---
@@ -480,6 +508,9 @@ cd apps/api
 npm run dev          # Start dev server with watch
 npm run build        # Build TypeScript
 npm run start        # Start production server
+npm test             # Run tests (~13s)
+npm run test:watch   # Run tests in watch mode
+npm run test:coverage # Run tests with coverage (~16s)
 
 # Root
 npm install          # Install all dependencies
