@@ -78,9 +78,15 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(protectedRoutes, { prefix: API_BASE });
 
   // Health check (unversioned)
-  app.get('/health', async () => {
-    return { status: 'ok' };
-  });
+  app.get(
+    '/health',
+    {
+      schema: { hide: true }
+    },
+    async () => {
+      return { status: 'ok' };
+    }
+  );
 
   return app;
 }

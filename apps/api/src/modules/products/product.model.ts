@@ -9,6 +9,7 @@ export interface IProductDocument extends Document {
   price: number;
   inventory: number;
   category?: string;
+  imageUrl?: string;
   tags?: string[];
   isActive: boolean;
   createdAt: Date;
@@ -55,6 +56,10 @@ const productSchema = new Schema<IProductDocument>(
       type: String,
       trim: true,
     },
+    imageUrl: {
+      type: String,
+      trim: true,
+    },
     tags: {
       type: [String],
       default: [],
@@ -88,6 +93,7 @@ productSchema.methods.toProductObject = function (): Product {
     price: this.price,
     inventory: this.inventory,
     category: this.category,
+    imageUrl: this.imageUrl,
     tags: this.tags,
     isActive: this.isActive,
     createdAt: this.createdAt,

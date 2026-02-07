@@ -20,7 +20,7 @@ const start = async () => {
 
     await app.listen({ port: PORT, host: HOST });
     app.log.info(`Server listening on http://${HOST}:${PORT}`);
-    app.log.info(`API Documentation available at http://localhost:${PORT}/documentation`);
+    app.log.info(`API Documentation available at http://localhost:${PORT}/docs`);
   } catch (err) {
     app.log.error(err);
     process.exit(1);

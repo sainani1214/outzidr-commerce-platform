@@ -85,6 +85,7 @@ export interface Product {
   inventory: number;
   sku: string;
   category?: string;
+  imageUrl?: string;
   isActive: boolean;
   tenantId: string;
   createdAt: string;

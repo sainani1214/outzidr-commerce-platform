@@ -2,12 +2,15 @@
 
 **Senior MERN Engineer Assignment** - Production-grade, multi-tenant e-commerce backend built with Fastify, TypeScript, and MongoDB.
 
+> **⚡ Quick Start**: All API requests require `x-tenant-id` header (e.g., `tenant_1`). Product management via Swagger UI at `/docs`. See [Multi-Tenancy](#multi-tenancy-model) and [Product Management](#-product-management-admin-operations) sections.
+
 ## 📋 Table of Contents
 
 - [Overview](#overview)
 - [Tech Stack](#tech-stack)
 - [Architecture](#architecture)
 - [Features Implemented](#features-implemented)
+- [Product Management (Admin)](#-product-management-admin-operations)
 - [Project Structure](#project-structure)
 - [Getting Started](#getting-started)
 - [API Documentation](#api-documentation)
@@ -61,10 +64,31 @@ A headless commerce platform supporting:
 
 ## 🏗️ Architecture
 
-### Multi-Tenancy
-- Tenant resolution via `x-tenant-id` header
-- Logical isolation in MongoDB (tenant field in all documents)
-- SKU uniqueness per tenant
+### Multi-Tenancy Model
+
+This platform uses **logical tenant isolation** via the `x-tenant-id` header:
+
+**How It Works:**
+- Each API request (except auth) requires an `x-tenant-id` header
+- Data is logically isolated by tenant field in MongoDB documents
+- SKUs are unique per tenant (not globally)
+
+**Example Tenant IDs:**
+```
+tenant_1        # Main production tenant
+demo_store      # Demo/staging environment
+test_tenant     # Testing purposes
+```
+
+**Usage Example:**
+```bash
+# All protected endpoints require both headers:
+curl -X GET 'http://localhost:3001/api/v1/products' \
+  -H 'Authorization: Bearer <access_token>' \
+  -H 'x-tenant-id: tenant_1'
+```
+
+> **Note**: The `x-tenant-id` header is required for all API endpoints 
 
 ### Authentication Flow
 ```
@@ -95,14 +119,17 @@ Cart → Create Order → MongoDB Transaction:
 
 ## ✅ Features Implemented
 
+> **🔑 Important**: All API endpoints require the `x-tenant-id` header for multi-tenant isolation. See [Multi-Tenancy Model](#multi-tenancy-model) and [Product Management](#-product-management-admin-operations) sections for details.
+
 ### 1. Multi-Tenant Architecture ✅
 - [x] Tenant resolution via `x-tenant-id` header
-- [x] Logical data isolation
+- [x] Logical data isolation (not physical database separation)
 - [x] Tenant-scoped queries
+- [x] Example tenant IDs: `tenant_1`, `demo_store`, `test_tenant`
 
 ### 2. Authentication System ✅
-- [x] POST `/api/v1/auth/register` - User registration
-- [x] POST `/api/v1/auth/login` - Login with JWT tokens
+- [x] POST `/api/v1/auth/register` - User registration (requires `x-tenant-id`)
+- [x] POST `/api/v1/auth/login` - Login with JWT tokens (requires `x-tenant-id`)
 - [x] POST `/api/v1/auth/refresh` - Refresh token rotation
 - [x] POST `/api/v1/auth/logout` - Token invalidation
 - [x] JWT RS256 (public/private key pair)
@@ -111,15 +138,18 @@ Cart → Create Order → MongoDB Transaction:
 - [x] HTTP-only cookies support
 
 ### 3. Product Catalog ✅
-- [x] POST `/api/v1/products` - Create product
-- [x] GET `/api/v1/products` - List products (with pagination & filtering)
-- [x] GET `/api/v1/products/:id` - Get product by ID
-- [x] GET `/api/v1/products/sku/:sku` - Get product by SKU
-- [x] PUT `/api/v1/products/:id` - Update product
-- [x] PATCH `/api/v1/products/:id/inventory` - Update inventory
-- [x] DELETE `/api/v1/products/:id` - Delete product
+> **Admin Operations** - Product creation/management via API (Swagger/Postman). See [Product Management](#-product-management-admin-operations).
+
+- [x] POST `/api/v1/products` - Create product (Admin)
+- [x] GET `/api/v1/products` - List products (Public + filtering/pagination)
+- [x] GET `/api/v1/products/:id` - Get product by ID (Public)
+- [x] GET `/api/v1/products/sku/:sku` - Get product by SKU (Public)
+- [x] PUT `/api/v1/products/:id` - Update product (Admin)
+- [x] PATCH `/api/v1/products/:id/inventory` - Update inventory (Admin)
+- [x] DELETE `/api/v1/products/:id` - Delete product (Admin)
 - [x] SKU unique per tenant
 - [x] Inventory cannot go below zero
+- [x] Optional product images (imageUrl field)
 
 ### 4. Dynamic Pricing Engine ✅
 - [x] Rules stored in database
@@ -156,6 +186,80 @@ Cart → Create Order → MongoDB Transaction:
 - [x] Error handling (`@fastify/sensible`)
 - [x] CORS (`@fastify/cors`)
 - [x] Cookie support (`@fastify/cookie`)
+
+---
+
+## 🔧 Product Management (Admin Operations)
+
+### Important: Admin UI vs API-First Approach
+
+This project intentionally separates:
+- **Customer Storefront** (Frontend) – Product browsing, cart, checkout
+- **Admin Operations** (API) – Product creation, pricing rules, inventory management
+
+**An Admin UI is not included** as it was outside the scope of this assignment. Instead, product and inventory management is handled via authenticated APIs.
+
+### How to Manage Products
+
+Products can be created and managed using:
+
+1. **Swagger UI** (Recommended) - `http://localhost:3001/docs`
+   - Interactive API documentation
+   - Built-in request builder
+   - Schema validation
+   - Try it out feature
+
+2. **Postman** - Import OpenAPI spec from `/docs/json`
+
+3. **cURL** - Direct HTTP requests
+
+### Example: Creating a Product
+
+```bash
+# 1. First, login to get access token
+curl -X POST 'http://localhost:3001/api/v1/auth/login' \
+  -H 'Content-Type: application/json' \
+  -H 'x-tenant-id: tenant_1' \
+  -d '{
+    "email": "user@example.com",
+    "password": "yourpassword"
+  }'
+
+# Response: { "accessToken": "...", "refreshToken": "..." }
+
+# 2. Create a product (Admin operation)
+curl -X POST 'http://localhost:3001/api/v1/products' \
+  -H 'Content-Type: application/json' \
+  -H 'Authorization: Bearer <access_token_from_step_1>' \
+  -H 'x-tenant-id: tenant_1' \
+  -d '{
+    "sku": "PROD-001",
+    "name": "Sample Product",
+    "description": "Product description",
+    "price": 29.99,
+    "inventory": 100,
+    "category": "Electronics",
+    "imageUrl": "https://example.com/image.jpg"
+  }'
+```
+
+### Required Headers for Product APIs
+
+All product management endpoints require **both** headers:
+
+| Header | Description | Example |
+|--------|-------------|---------|
+| `Authorization` | JWT Bearer token from login | `Bearer eyJhbGc...` |
+| `x-tenant-id` | Tenant identifier for data isolation | `tenant_1`, `demo_store`, `test_tenant` |
+
+### Available Admin Endpoints
+
+- **POST** `/api/v1/products` - Create new product
+- **PUT** `/api/v1/products/:id` - Update product details
+- **PATCH** `/api/v1/products/:id/inventory` - Update inventory
+- **DELETE** `/api/v1/products/:id` - Delete product
+
+See [API Documentation](#api-documentation) for full endpoint details.
 
 ---
 
@@ -324,7 +428,7 @@ JWT_PUBLIC_KEY="$(cat public.key)"
 PORT=3001
 ```
 
-> **💡 Tip for Reviewers:** Use [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) free tier (no local installation required) - just create a cluster and update `MONGODB_URI`
+Use [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) free tier (no local installation required) - just create a cluster and update `MONGODB_URI`
 
 5. **Start MongoDB** (if using local MongoDB)
 ```bash
@@ -352,7 +456,7 @@ Server will start at `http://localhost:3001`
 The complete API documentation is available via Swagger UI at:
 
 ```
-http://localhost:3001/documentation
+http://localhost:3001/docs
 ```
 
 **Features:**
@@ -363,12 +467,32 @@ http://localhost:3001/documentation
 
 **Quick Start:**
 1. Start MongoDB and the API server
-2. Navigate to `http://localhost:3001/documentation`
-3. Register a user via `/api/v1/auth/register`
-4. Use the "Authorize" button with your access token
-5. Test all endpoints interactively
+2. Navigate to `http://localhost:3001/docs`
+3. Register a user via `/api/v1/auth/register` (requires `x-tenant-id` header)
+4. Login via `/api/v1/auth/login` to get access token
+5. Click the "Authorize" button at the top and enter your access token
+6. All protected endpoints will now show the `x-tenant-id` header field
+7. Enter your tenant ID (e.g., `tenant_1`) in the header for each request
+8. Test all endpoints interactively
 
-**All requests require `x-tenant-id` header** - use any string (e.g., `tenant_1`) for testing.
+### Important: Multi-Tenant Headers
+
+**All API requests require the `x-tenant-id` header** (except health check):
+
+```bash
+# Authentication endpoints (register, login) require only x-tenant-id
+x-tenant-id: tenant_1
+
+# Protected endpoints require BOTH headers
+Authorization: Bearer <access_token>
+x-tenant-id: tenant_1
+```
+
+**Available Tenant IDs for Testing:**
+- `tenant_1` - Primary tenant
+- `demo_store` - Demo environment
+- `test_tenant` - Testing purposes
+- Or use any custom string for your own tenant
 
 ### API Structure
 
@@ -376,12 +500,14 @@ http://localhost:3001/documentation
 Base URL: http://localhost:3001/api/v1
 ```
 
-**Endpoint Groups:**
-- **Auth**: `/auth/*` - Registration, login, token refresh, logout
-- **Users**: `/users/*` - Profile management
-- **Products**: `/products/*` - Catalog CRUD with pagination
-- **Cart**: `/cart/*` - Shopping cart operations
-- **Orders**: `/orders/*` - Order creation and management
+**Endpoint Groups:** (requires `x-tenant-id`)
+- **Auth**: `/auth/*` - Registration, login, token refresh, logout 
+- **Users**: `/users/*` - Profile management (requires both headers)
+- **Products**: `/products/*` - Catalog CRUD with pagination (requires both headers)
+- **Cart**: `/cart/*` - Shopping cart operations (requires both headers)
+- **Orders**: `/orders/*` - Order creation and management (requires both headers)
+
+> **Note**: The Swagger UI will display the `x-tenant-id` header field for all endpoints. Make sure to fill it in when testing.
 
 > For detailed schemas, parameters, and examples, refer to the Swagger UI documentation.
 

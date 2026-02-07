@@ -7,6 +7,7 @@ export interface Product {
   price: number;
   inventory: number;
   category?: string;
+  imageUrl?: string;
   tags?: string[];
   isActive: boolean;
   createdAt: Date;
@@ -23,6 +24,7 @@ export interface CreateProductDTO {
   price: number;
   inventory: number;
   category?: string;
+  imageUrl?: string;
   tags?: string[];
   isActive?: boolean;
 }
@@ -33,6 +35,7 @@ export interface UpdateProductDTO {
   price?: number;
   inventory?: number;
   category?: string;
+  imageUrl?: string;
   tags?: string[];
   isActive?: boolean;
 }

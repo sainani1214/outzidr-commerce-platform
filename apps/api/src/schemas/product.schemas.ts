@@ -2,6 +2,7 @@ export const createProductSchema = {
   tags: ['products'],
   description: 'Create a new product',
   security: [{ bearerAuth: [] }],
+  headers: { $ref: 'tenantHeader#' },
   body: {
     type: 'object',
     required: ['sku', 'name', 'price', 'inventory'],
@@ -12,6 +13,7 @@ export const createProductSchema = {
       price: { type: 'number' },
       inventory: { type: 'number' },
       category: { type: 'string' },
+      imageUrl: { type: 'string', description: 'Product image URL' },
       tags: { type: 'array', items: { type: 'string' } },
     },
   },
@@ -21,6 +23,7 @@ export const getProductsSchema = {
   tags: ['products'],
   description: 'List products with pagination and filters',
   security: [{ bearerAuth: [] }],
+  headers: { $ref: 'tenantHeader#' },
   querystring: {
     type: 'object',
     properties: {
@@ -37,6 +40,7 @@ export const getProductByIdSchema = {
   tags: ['products'],
   description: 'Get product by ID',
   security: [{ bearerAuth: [] }],
+  headers: { $ref: 'tenantHeader#' },
   params: {
     type: 'object',
     properties: {
@@ -49,6 +53,7 @@ export const getProductBySkuSchema = {
   tags: ['products'],
   description: 'Get product by SKU',
   security: [{ bearerAuth: [] }],
+  headers: { $ref: 'tenantHeader#' },
   params: {
     type: 'object',
     properties: {
@@ -61,6 +66,7 @@ export const updateProductSchema = {
   tags: ['products'],
   description: 'Update product',
   security: [{ bearerAuth: [] }],
+  headers: { $ref: 'tenantHeader#' },
   params: {
     type: 'object',
     properties: {
@@ -74,6 +80,7 @@ export const updateProductSchema = {
       description: { type: 'string' },
       price: { type: 'number' },
       category: { type: 'string' },
+      imageUrl: { type: 'string', description: 'Product image URL' },
       tags: { type: 'array', items: { type: 'string' } },
       isActive: { type: 'boolean' },
     },
@@ -84,6 +91,7 @@ export const updateInventorySchema = {
   tags: ['products'],
   description: 'Update product inventory',
   security: [{ bearerAuth: [] }],
+  headers: { $ref: 'tenantHeader#' },
   params: {
     type: 'object',
     properties: {
@@ -103,6 +111,7 @@ export const deleteProductSchema = {
   tags: ['products'],
   description: 'Delete product',
   security: [{ bearerAuth: [] }],
+  headers: { $ref: 'tenantHeader#' },
   params: {
     type: 'object',
     properties: {

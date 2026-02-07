@@ -2,6 +2,7 @@ export const createOrderSchema = {
   tags: ['orders'],
   description: 'Create new order from cart',
   security: [{ bearerAuth: [] }],
+  headers: { $ref: 'tenantHeader#' },
   body: {
     type: 'object',
     required: ['shippingAddress'],
@@ -28,6 +29,7 @@ export const getOrdersSchema = {
   tags: ['orders'],
   description: 'Get user orders',
   security: [{ bearerAuth: [] }],
+  headers: { $ref: 'tenantHeader#' },
   querystring: {
     type: 'object',
     properties: {
@@ -45,6 +47,7 @@ export const getOrderByIdSchema = {
   tags: ['orders'],
   description: 'Get order by ID',
   security: [{ bearerAuth: [] }],
+  headers: { $ref: 'tenantHeader#' },
   params: {
     type: 'object',
     properties: {
@@ -57,6 +60,7 @@ export const updateOrderStatusSchema = {
   tags: ['orders'],
   description: 'Update order status',
   security: [{ bearerAuth: [] }],
+  headers: { $ref: 'tenantHeader#' },
   params: {
     type: 'object',
     properties: {

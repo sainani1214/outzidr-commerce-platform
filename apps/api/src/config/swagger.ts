@@ -48,13 +48,28 @@ export async function registerSwagger(app: FastifyInstance) {
       },
       security: [],
     },
+    transform: ({ schema, url }) => {
+      if (url === '/health') {
+        return { schema: { ...schema, hide: true }, url };
+      }
+      return { schema, url };
+    },
   });
 
   await app.register(swaggerUI, {
-    routePrefix: '/documentation',
+    routePrefix: '/docs',
     uiConfig: {
       docExpansion: 'list',
       deepLinking: true,
+      persistAuthorization: true,
+    },
+    uiHooks: {
+      onRequest: function (request, reply, next) {
+        next();
+      },
+      preHandler: function (request, reply, next) {
+        next();
+      },
     },
     staticCSP: true,
     transformStaticCSP: (header) => header,
