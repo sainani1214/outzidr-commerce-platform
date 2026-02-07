@@ -47,11 +47,15 @@ A headless commerce platform supporting:
 - **Coverage**: 132 of 132 runnable tests passing | 28 skipped (MongoDB transactions)
 - **Execution Time**: ~15s
 
-### Frontend (Planned)
-- **Framework**: Next.js 14+ (App Router)
+### Frontend
+- **Framework**: Next.js 16.1+ (App Router)
 - **Language**: TypeScript
-- **Validation**: Zod
-- **Rendering**: Server Components + Route Handlers
+- **Styling**: Tailwind CSS with themed design system
+- **Authentication**: Server Actions with HTTP-only cookies
+- **State Management**: Server Components + Server Actions
+- **Rendering**: Server-Side Rendering (SSR)
+- **Security**: Edge middleware for route protection
+- **UI**:  Dark theme with glassmorphism
 
 ---
 
@@ -160,69 +164,112 @@ Cart → Create Order → MongoDB Transaction:
 ```
 outzidr-commerce-platform/
 ├── apps/
-│   └── api/                          # Backend API
-│       ├── src/
-│       │   ├── app.ts                # Fastify app setup
-│       │   ├── server.ts             # Server entry point
-│       │   ├── config/               # Configuration
-│       │   │   ├── api.ts            # API versioning config
-│       │   │   └── swagger.ts        # Swagger/OpenAPI setup
-│       │   ├── modules/              # Feature modules
-│       │   │   ├── auth/             # Authentication
-│       │   │   │   ├── auth.controller.ts
-│       │   │   │   ├── auth.service.ts
-│       │   │   │   ├── auth.routes.ts
-│       │   │   │   ├── auth.types.ts
-│       │   │   │   ├── refreshToken.model.ts
-│       │   │   │   └── __tests__/    # Auth tests
-│       │   │   ├── users/            # User management
-│       │   │   │   ├── user.controller.ts
-│       │   │   │   ├── user.model.ts
-│       │   │   │   └── user.routes.ts
-│       │   │   ├── products/         # Product catalog
-│       │   │   │   ├── product.controller.ts
-│       │   │   │   ├── product.service.ts
-│       │   │   │   ├── product.routes.ts
-│       │   │   │   ├── product.types.ts
-│       │   │   │   └── product.model.ts
-│       │   │   ├── pricing/          # Dynamic pricing
-│       │   │   │   ├── pricing.service.ts
-│       │   │   │   ├── pricing.types.ts
-│       │   │   │   └── pricing.model.ts
-│       │   │   ├── cart/             # Shopping cart
-│       │   │   │   ├── cart.controller.ts
-│       │   │   │   ├── cart.service.ts
-│       │   │   │   ├── cart.routes.ts
-│       │   │   │   ├── cart.types.ts
-│       │   │   │   └── cart.model.ts
-│       │   │   └── orders/           # Order management
-│       │   │       ├── order.controller.ts
-│       │   │       ├── order.service.ts
-│       │   │       ├── order.routes.ts
-│       │   │       ├── order.types.ts
-│       │   │       └── order.model.ts
-│       │   ├── plugins/              # Fastify plugins
-│       │   │   ├── authGuard.ts      # Auth middleware
-│       │   │   ├── tenant.ts         # Tenant resolution
-│       │   │   ├── mongodb.ts        # MongoDB connection
-│       │   │   └── errorHandler.ts   # Global error handler
-│       │   ├── routes/               # Route aggregation
-│       │   │   └── protected.routes.ts
-│       │   ├── schemas/              # OpenAPI schemas
-│       │   ├── types/                # TypeScript declarations
-│       │   ├── utils/                # Utilities
-│       │   │   ├── validators.ts     # Validation helpers
-│       │   │   └── errors.ts         # Custom error classes
-│       │   ├── __tests__/            # Integration tests
-│       │   │   └── integration/
-│       │   │       ├── auth.integration.test.ts
-│       │   │       ├── cart.integration.test.ts
-│       │   │       ├── product.integration.test.ts
-│       │   │       └── order.integration.test.ts
-│       │   └── tests/                # Test utilities
-│       │       └── testApp.ts        # Test setup helpers
+│   ├── api/                          # Backend API
+│   │   ├── src/
+│   │   │   ├── app.ts                # Fastify app setup
+│   │   │   ├── server.ts             # Server entry point
+│   │   │   ├── config/               # Configuration
+│   │   │   │   ├── api.ts            # API versioning config
+│   │   │   │   └── swagger.ts        # Swagger/OpenAPI setup
+│   │   │   ├── modules/              # Feature modules
+│   │   │   │   ├── auth/             # Authentication
+│   │   │   │   │   ├── auth.controller.ts
+│   │   │   │   │   ├── auth.service.ts
+│   │   │   │   │   ├── auth.routes.ts
+│   │   │   │   │   ├── auth.types.ts
+│   │   │   │   │   ├── refreshToken.model.ts
+│   │   │   │   │   └── __tests__/    # Auth tests
+│   │   │   │   ├── users/            # User management
+│   │   │   │   │   ├── user.controller.ts
+│   │   │   │   │   ├── user.model.ts
+│   │   │   │   │   └── user.routes.ts
+│   │   │   │   ├── products/         # Product catalog
+│   │   │   │   │   ├── product.controller.ts
+│   │   │   │   │   ├── product.service.ts
+│   │   │   │   │   ├── product.routes.ts
+│   │   │   │   │   ├── product.types.ts
+│   │   │   │   │   └── product.model.ts
+│   │   │   │   ├── pricing/          # Dynamic pricing
+│   │   │   │   │   ├── pricing.service.ts
+│   │   │   │   │   ├── pricing.types.ts
+│   │   │   │   │   └── pricing.model.ts
+│   │   │   │   ├── cart/             # Shopping cart
+│   │   │   │   │   ├── cart.controller.ts
+│   │   │   │   │   ├── cart.service.ts
+│   │   │   │   │   ├── cart.routes.ts
+│   │   │   │   │   ├── cart.types.ts
+│   │   │   │   │   └── cart.model.ts
+│   │   │   │   └── orders/           # Order management
+│   │   │   │       ├── order.controller.ts
+│   │   │   │       ├── order.service.ts
+│   │   │   │       ├── order.routes.ts
+│   │   │   │       ├── order.types.ts
+│   │   │   │       └── order.model.ts
+│   │   │   ├── plugins/              # Fastify plugins
+│   │   │   │   ├── authGuard.ts      # Auth middleware
+│   │   │   │   ├── tenant.ts         # Tenant resolution
+│   │   │   │   ├── mongodb.ts        # MongoDB connection
+│   │   │   │   └── errorHandler.ts   # Global error handler
+│   │   │   ├── routes/               # Route aggregation
+│   │   │   │   └── protected.routes.ts
+│   │   │   ├── schemas/              # OpenAPI schemas
+│   │   │   ├── types/                # TypeScript declarations
+│   │   │   ├── utils/                # Utilities
+│   │   │   │   ├── validators.ts     # Validation helpers
+│   │   │   │   └── errors.ts         # Custom error classes
+│   │   │   ├── __tests__/            # Integration tests
+│   │   │   │   └── integration/
+│   │   │   │       ├── auth.integration.test.ts
+│   │   │   │       ├── cart.integration.test.ts
+│   │   │   │       ├── product.integration.test.ts
+│   │   │   │       └── order.integration.test.ts
+│   │   │   └── tests/                # Test utilities
+│   │   │       └── testApp.ts        # Test setup helpers
+│   │   ├── package.json
+│   │   └── tsconfig.json
+│   │
+│   └── web/                          # Frontend (Next.js)
+│       ├── app/                      # App Router
+│       │   ├── _actions/             # Server Actions (private)
+│       │   │   └── auth.ts
+│       │   ├── checkout/
+│       │   │   └── page.tsx
+│       │   ├── login/
+│       │   │   └── page.tsx
+│       │   ├── register/
+│       │   │   └── page.tsx
+│       │   ├── products/
+│       │   │   └── page.tsx
+│       │   ├── orders/
+│       │   │   └── page.tsx
+│       │   ├── layout.tsx
+│       │   ├── page.tsx
+│       │   ├── globals.css
+│       │   └── favicon.ico
+│       ├── components/
+│       │   ├── Navigation.tsx
+│       │   ├── Hero.tsx
+│       │   ├── FeaturedProducts.tsx
+│       │   ├── products/
+│       │   ├── checkout/
+│       │   └── orders/
+│       ├── contexts/
+│       ├── lib/
+│       │   ├── server-api.ts
+│       │   ├── api-client.ts
+│       │   └── api.ts
+│       ├── styles/
+│       │   ├── colors.ts
+│       │   └── semantic.ts
+│       ├── public/
+│       ├── middleware.ts
+│       ├── next.config.ts
+│       ├── tailwind.config.ts
+│       ├── postcss.config.mjs
+│       ├── eslint.config.mjs
 │       ├── package.json
 │       └── tsconfig.json
+│
 ├── docs/                             # Documentation
 ├── packages/                         # Shared packages
 ├── package.json                      # Root package.json
@@ -300,201 +347,43 @@ Server will start at `http://localhost:3001`
 
 ## 📚 API Documentation
 
-### 🔷 Interactive Swagger UI
+### Interactive Swagger UI
 
-**Access the interactive API documentation:**
+The complete API documentation is available via Swagger UI at:
 
 ```
 http://localhost:3001/documentation
 ```
 
-**Prerequisites for Testing:**
-- ✅ MongoDB running (locally or Atlas)
-- ✅ Server running: `npm run dev -w api`
-- ✅ Environment variables configured (`.env` file)
-
 **Features:**
-- ✅ **Try it out** - Test all endpoints directly from the browser
-- ✅ **Full schema validation** - See request/response examples
-- ✅ **JWT Authentication** - Authorize once, use for all requests
-- ✅ **20 endpoints** documented with OpenAPI 3.0 spec
+- 20+ documented endpoints with request/response schemas
+- Interactive "Try it out" functionality
+- JWT authentication integration
+- OpenAPI 3.0 specification
 
-**Quick Start with Swagger:**
-1. **Start MongoDB:**
-   ```bash
-   # Local MongoDB
-   mongod
-   
-   # OR use MongoDB Atlas (cloud)
-   # Update MONGODB_URI in .env with Atlas connection string
-   ```
+**Quick Start:**
+1. Start MongoDB and the API server
+2. Navigate to `http://localhost:3001/documentation`
+3. Register a user via `/api/v1/auth/register`
+4. Use the "Authorize" button with your access token
+5. Test all endpoints interactively
 
-2. **Start the server:**
-   ```bash
-   npm run dev -w api
-   ```
+**All requests require `x-tenant-id` header** - use any string (e.g., `tenant_1`) for testing.
 
-3. **Open Swagger UI:**
-   ```
-   http://localhost:3001/documentation
-   ```
+### API Structure
 
-4. **Test the API:**
-   - All requests require `x-tenant-id` header
-   - **For testing:** Use any string like `tenant_1`, `acme_corp`, `test_tenant`
-   - Tenants are created automatically (soft multi-tenancy)
-
-5. **Try authentication:**
-   - Use `/api/v1/auth/register` endpoint (no auth required)
-   - Copy the `accessToken` from response
-   - Click "Authorize" button → Paste token → Test protected endpoints
-
-**Common Issues:**
-- ❌ **"Cannot connect"** → Check if MongoDB is running (`mongod`)
-- ❌ **"Connection refused"** → Verify `MONGODB_URI` in `.env` file
-- ❌ **"x-tenant-id header missing"** → Add tenant ID to request header
-- ❌ **"Unauthorized"** → Register/login first, then use access token
-
----
-
-### Base URL
 ```
-http://localhost:3001/api/v1
+Base URL: http://localhost:3001/api/v1
 ```
 
-> **📌 API Versioning:** All endpoints are versioned under `/api/v1` for backward compatibility and clean API evolution.
+**Endpoint Groups:**
+- **Auth**: `/auth/*` - Registration, login, token refresh, logout
+- **Users**: `/users/*` - Profile management
+- **Products**: `/products/*` - Catalog CRUD with pagination
+- **Cart**: `/cart/*` - Shopping cart operations
+- **Orders**: `/orders/*` - Order creation and management
 
-### Authentication
-
-All protected endpoints require:
-- **Header**: `Authorization: Bearer <access_token>`
-- **Header**: `x-tenant-id: <tenant_id>`
-  - 🔑 **Required for all requests**
-  - Use any string (e.g., `tenant_1`, `acme_corp`, `test_tenant`)
-  - Tenants are **auto-created** on first use (soft multi-tenancy)
-  - Each tenant has isolated data (users, products, carts, orders)
-
-### Endpoints
-
-#### **Authentication** (No auth required)
-```bash
-POST /api/v1/auth/register     # Register new user
-POST /api/v1/auth/login        # Login
-POST /api/v1/auth/refresh      # Refresh access token
-POST /api/v1/auth/logout       # Logout
-```
-
-#### **User** (Protected)
-```bash
-GET /api/v1/users/me           # Get current user
-```
-
-#### **Products** (Protected)
-```bash
-POST   /api/v1/products                    # Create product
-GET    /api/v1/products                    # List products (paginated)
-GET    /api/v1/products/:id                # Get product
-GET    /api/v1/products/sku/:sku           # Get by SKU
-PUT    /api/v1/products/:id                # Update product
-PATCH  /api/v1/products/:id/inventory      # Update inventory
-DELETE /api/v1/products/:id                # Delete product
-```
-
-#### **Cart** (Protected)
-```bash
-GET    /api/v1/cart                        # Get cart
-POST   /api/v1/cart/items                  # Add to cart
-PUT    /api/v1/cart/items/:productId       # Update quantity
-DELETE /api/v1/cart/items/:productId       # Remove item
-DELETE /api/v1/cart                        # Clear cart
-```
-
-#### **Orders** (Protected)
-```bash
-POST   /api/v1/orders                      # Create order
-GET    /api/v1/orders                      # List orders (paginated)
-GET    /api/v1/orders/:id                  # Get order
-PUT    /api/v1/orders/:id/status           # Update status
-```
-
-#### **Health Check** (Public)
-```bash
-GET /health                             # Health check (unversioned)
-```
-
-### Example Requests
-
-**Register**
-```bash
-curl -X POST http://localhost:3001/api/v1/auth/register \
-  -H "Content-Type: application/json" \
-  -H "x-tenant-id: tenant_1" \
-  -d '{
-    "email": "user@example.com",
-    "password": "SecurePass123!",
-    "confirmPassword": "SecurePass123!",
-    "name": "John Doe"
-  }'
-```
-
-**Login**
-```bash
-curl -X POST http://localhost:3001/api/v1/auth/login \
-  -H "Content-Type: application/json" \
-  -H "x-tenant-id: tenant_1" \
-  -d '{
-    "email": "user@example.com",
-    "password": "SecurePass123!"
-  }'
-```
-
-**Create Product**
-```bash
-curl -X POST http://localhost:3001/api/v1/products \
-  -H "Authorization: Bearer <token>" \
-  -H "Content-Type: application/json" \
-  -H "x-tenant-id: tenant_1" \
-  -d '{
-    "name": "Laptop",
-    "description": "High-performance laptop",
-    "sku": "LAP-001",
-    "price": 999.99,
-    "inventory": 50,
-    "category": "Electronics"
-  }'
-```
-
-**Add to Cart**
-```bash
-curl -X POST http://localhost:3001/api/v1/cart/items \
-  -H "Authorization: Bearer <token>" \
-  -H "Content-Type: application/json" \
-  -H "x-tenant-id: tenant_1" \
-  -d '{
-    "productId": "65f8acf61071cc74303957be",
-    "quantity": 2
-  }'
-```
-
-**Create Order**
-```bash
-curl -X POST http://localhost:3001/api/v1/orders \
-  -H "Authorization: Bearer <token>" \
-  -H "Content-Type: application/json" \
-  -H "x-tenant-id: tenant_1" \
-  -d '{
-    "shippingAddress": {
-      "name": "John Doe",
-      "addressLine1": "123 Main St",
-      "addressLine2": "Apt 4B",
-      "city": "New York",
-      "state": "NY",
-      "postalCode": "10001",
-      "country": "USA",
-      "phone": "+1234567890"
-    }
-  }'
-```
+> For detailed schemas, parameters, and examples, refer to the Swagger UI documentation.
 
 ---
 
@@ -582,34 +471,35 @@ npm run test:coverage    # Coverage report with details
 - [x] API documentation (Swagger/OpenAPI 3.0)
 - [x] Production-ready error handling
 
-### Frontend (Planned - Next.js)
-- [ ] Next.js 14+ setup (App Router)
-- [ ] Server Components
-- [ ] Product listing (SSR)
-- [ ] Authentication flow
-- [ ] HTTP-only cookie auth
-- [ ] Cart management
-- [ ] Checkout flow
+### Frontend (Current Status)
+- [x] Next.js 16.1+ setup (App Router)
+- [x] Server Components & Server Actions
+- [x] Product listing with SSR
+- [x] Authentication flow with HTTP-only cookies
+- [x] UI with dark theme
+- [x] Edge middleware for route protection
+- [ ] Cart management UI
+- [ ] Checkout flow UI
 
 ---
 
-## 🎯 Assignment Requirements Met
+## 🎯 Assignment Requirements
 
-✅ **Multi-tenant stores** - Tenant isolation via header  
-✅ **Product catalog** - Full CRUD with pagination  
-✅ **Dynamic pricing rules** - Database-driven engine  
-✅ **Cart & checkout** - Full implementation  
-✅ **JWT authentication** - RS256 with refresh tokens  
-✅ **API Gateway-style middleware** - Fastify plugins  
-✅ **Fastify** (not Express) - Full Fastify implementation  
-✅ **TypeScript** - 100% TypeScript codebase  
-✅ **MongoDB** - Mongoose with transactions  
-✅ **Atomic inventory lock** - MongoDB transactions  
+✅ **Multi-tenant architecture** - Header-based tenant isolation  
+✅ **Product catalog** - CRUD with pagination and filtering  
+✅ **Dynamic pricing** - Database-driven rule engine  
+✅ **Cart & checkout** - Full implementation with real-time pricing  
+✅ **JWT authentication** - RS256 with refresh token rotation  
+✅ **API Gateway pattern** - Fastify plugins and middleware  
+✅ **Fastify framework** - Full implementation (not Express)  
+✅ **TypeScript** - 100% type-safe codebase  
+✅ **MongoDB** - Mongoose with transaction support  
+✅ **Atomic operations** - Transaction-based inventory locking  
 ✅ **Rate limiting** - Multi-tenant aware with per-route limits  
-✅ **Testing** - Comprehensive unit and integration test suite  
-✅ **API Documentation** - Swagger/OpenAPI 3.0 with interactive UI  
-✅ **Error Handling** - Global error handler with custom error classes  
-⏳ **Next.js SSR** - Planned  
+✅ **Comprehensive testing** - 132/132 runnable tests passing  
+✅ **API documentation** - Interactive Swagger/OpenAPI 3.0  
+✅ **Error handling** - Global handlers with custom error classes  
+✅ **Next.js integration** - SSR with Server Components  
 
 ---
 
