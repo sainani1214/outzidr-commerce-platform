@@ -171,9 +171,9 @@ describe('Product Integration Tests', () => {
       expect(body.data).toBeDefined();
       expect(body.data.length).toBeLessThanOrEqual(2);
       expect(body.pagination).toBeDefined();
-      expect(body.pagination.page).toBe(1);
-      expect(body.pagination.limit).toBe(2);
-      expect(body.pagination.total).toBeGreaterThan(0);
+      expect(body.pagination.currentPage).toBe(1);
+      expect(body.pagination.itemsPerPage).toBe(2);
+      expect(body.pagination.totalItems).toBeGreaterThan(0);
     });
 
     it('should list all products without pagination', async () => {
@@ -211,7 +211,7 @@ describe('Product Integration Tests', () => {
 
       const response = await context.app.inject({
         method: 'GET',
-        url: `/api/products/${productId}`,
+        url: `/api/v1/products/${productId}`,
         headers: {
           'x-tenant-id': context.tenantId,
           authorization: `Bearer ${accessToken}`,
@@ -255,7 +255,7 @@ describe('Product Integration Tests', () => {
     it('should update a product successfully', async () => {
       const response = await context.app.inject({
         method: 'PUT',
-        url: `/api/products/${productId}`,
+        url: `/api/v1/products/${productId}`,
         headers: {
           'x-tenant-id': context.tenantId,
           authorization: `Bearer ${accessToken}`,
@@ -318,7 +318,7 @@ describe('Product Integration Tests', () => {
     it('should delete a product successfully', async () => {
       const response = await context.app.inject({
         method: 'DELETE',
-        url: `/api/products/${deleteProductId}`,
+        url: `/api/v1/products/${deleteProductId}`,
         headers: {
           'x-tenant-id': context.tenantId,
           authorization: `Bearer ${accessToken}`,
@@ -333,7 +333,7 @@ describe('Product Integration Tests', () => {
     it('should fail to get deleted product', async () => {
       const response = await context.app.inject({
         method: 'GET',
-        url: `/api/products/${deleteProductId}`,
+        url: `/api/v1/products/${deleteProductId}`,
         headers: {
           'x-tenant-id': context.tenantId,
           authorization: `Bearer ${accessToken}`,
@@ -411,7 +411,7 @@ describe('Product Integration Tests', () => {
     it('should not access product from other tenant', async () => {
       const response = await context.app.inject({
         method: 'GET',
-        url: `/api/products/${productId}`,
+        url: `/api/v1/products/${productId}`,
         headers: {
           'x-tenant-id': otherTenantId,
           authorization: `Bearer ${otherTenantToken}`,

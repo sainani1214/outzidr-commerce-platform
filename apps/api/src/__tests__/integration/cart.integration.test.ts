@@ -251,7 +251,7 @@ describe('Cart Integration Tests', () => {
     it('should update item quantity successfully', async () => {
       const response = await context.app.inject({
         method: 'PUT',
-        url: `/api/cart/items/${productId1}`,
+        url: `/api/v1/cart/items/${productId1}`,
         headers: {
           'x-tenant-id': context.tenantId,
           authorization: `Bearer ${accessToken}`,
@@ -287,7 +287,7 @@ describe('Cart Integration Tests', () => {
     it('should fail with invalid quantity', async () => {
       const response = await context.app.inject({
         method: 'PUT',
-        url: `/api/cart/items/${productId1}`,
+        url: `/api/v1/cart/items/${productId1}`,
         headers: {
           'x-tenant-id': context.tenantId,
           authorization: `Bearer ${accessToken}`,
@@ -305,7 +305,7 @@ describe('Cart Integration Tests', () => {
     it('should remove item from cart successfully', async () => {
       const response = await context.app.inject({
         method: 'DELETE',
-        url: `/api/cart/items/${productId2}`,
+        url: `/api/v1/cart/items/${productId2}`,
         headers: {
           'x-tenant-id': context.tenantId,
           authorization: `Bearer ${accessToken}`,

@@ -142,7 +142,7 @@ describe('Order Integration Tests', () => {
     it('should have reduced product stock after order', async () => {
       const product1Response = await context.app.inject({
         method: 'GET',
-        url: `/api/products/${productId1}`,
+        url: `/api/v1/products/${productId1}`,
         headers: {
           'x-tenant-id': context.tenantId,
           authorization: `Bearer ${accessToken}`,
@@ -154,7 +154,7 @@ describe('Order Integration Tests', () => {
 
       const product2Response = await context.app.inject({
         method: 'GET',
-        url: `/api/products/${productId2}`,
+        url: `/api/v1/products/${productId2}`,
         headers: {
           'x-tenant-id': context.tenantId,
           authorization: `Bearer ${accessToken}`,
@@ -291,7 +291,7 @@ describe('Order Integration Tests', () => {
 
       const response = await context.app.inject({
         method: 'GET',
-        url: `/api/orders/${orderId}`,
+        url: `/api/v1/orders/${orderId}`,
         headers: {
           'x-tenant-id': context.tenantId,
           authorization: `Bearer ${accessToken}`,
@@ -336,7 +336,7 @@ describe('Order Integration Tests', () => {
     it('should update order status successfully', async () => {
       const response = await context.app.inject({
         method: 'PUT',
-        url: `/api/orders/${orderId}/status`,
+        url: `/api/v1/orders/${orderId}/status`,
         headers: {
           'x-tenant-id': context.tenantId,
           authorization: `Bearer ${accessToken}`,
@@ -354,7 +354,7 @@ describe('Order Integration Tests', () => {
     it('should fail with invalid status', async () => {
       const response = await context.app.inject({
         method: 'PUT',
-        url: `/api/orders/${orderId}/status`,
+        url: `/api/v1/orders/${orderId}/status`,
         headers: {
           'x-tenant-id': context.tenantId,
           authorization: `Bearer ${accessToken}`,
@@ -447,7 +447,7 @@ describe('Order Integration Tests', () => {
     it('should not reduce stock when order fails', async () => {
       const productResponse = await context.app.inject({
         method: 'GET',
-        url: `/api/products/${lowStockProductId}`,
+        url: `/api/v1/products/${lowStockProductId}`,
         headers: {
           'x-tenant-id': context.tenantId,
           authorization: `Bearer ${accessToken}`,
@@ -513,7 +513,7 @@ describe('Order Integration Tests', () => {
     it('should not access order from other tenant', async () => {
       const response = await context.app.inject({
         method: 'GET',
-        url: `/api/orders/${orderId}`,
+        url: `/api/v1/orders/${orderId}`,
         headers: {
           'x-tenant-id': otherTenantId,
           authorization: `Bearer ${otherTenantToken}`,
