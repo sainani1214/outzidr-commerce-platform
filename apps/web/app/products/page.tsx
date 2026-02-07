@@ -58,7 +58,7 @@ export default async function ProductsPage({ searchParams }: PageProps) {
   return (
     <main style={{ backgroundColor: colors.bg.primary }} className="min-h-screen text-white">
       <section className="px-4 sm:px-8 pt-24 pb-16 max-w-7xl mx-auto">
-        <h1 className="text-3xl sm:text-4xl font-semibold" style={{ color: colors.text.primary }}>
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-semibold" style={{ color: colors.text.primary }}>
           Products
         </h1>
         <p className="mt-3 max-w-2xl text-sm sm:text-base" style={{ color: colors.text.secondary }}>

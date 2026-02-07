@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Montserrat } from "next/font/google";
 import "./globals.css";
 import Navigation from "@/components/Navigation";
 import { colors } from "@/styles/colors";
 import { AuthProvider } from "./_providers/AuthProvider";
+import { ToastProvider } from "./_providers/ToastProvider";
 
-const inter = Inter({
+const montserrat = Montserrat({
   subsets: ["latin"],
-  variable: "--font-inter",
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-montserrat",
 });
 
 export const metadata: Metadata = {
@@ -23,15 +25,17 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body 
-        className={`${inter.variable} font-sans antialiased`}
-        style={{ backgroundColor: colors.bg.primary }}
+        className={`${montserrat.variable} font-sans antialiased`}
+        style={{ backgroundColor: colors.bg.primary, fontFamily: 'var(--font-montserrat)' }}
         suppressHydrationWarning
       >
         <AuthProvider>
-          <Navigation />
-          <main className="min-h-screen pt-16">
-            {children}
-          </main>
+          <ToastProvider>
+            <Navigation />
+            <main className="min-h-screen pt-16">
+              {children}
+            </main>
+          </ToastProvider>
         </AuthProvider>
       </body>
     </html>

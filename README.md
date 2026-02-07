@@ -1,6 +1,6 @@
 # Outzidr Commerce Platform
 
-**Senior MERN Engineer Assignment** - Production-grade, multi-tenant e-commerce backend built with Fastify, TypeScript, and MongoDB.
+A production-grade, API-first commerce system built with Fastify and TypeScript, backed by MongoDB for multi-tenant isolation and transactional integrity, and paired with an SSR-driven Next.js frontend to optimize performance across critical commerce flows.
 
 > **⚡ Quick Start**: All API requests require `x-tenant-id` header (e.g., `tenant_1`). Product management via Swagger UI at `/docs`. See [Multi-Tenancy](#multi-tenancy-model) and [Product Management](#-product-management-admin-operations) sections.
 
@@ -75,9 +75,9 @@ This platform uses **logical tenant isolation** via the `x-tenant-id` header:
 
 **Example Tenant IDs:**
 ```
-tenant_1        # Main production tenant
-demo_store      # Demo/staging environment
-test_tenant     # Testing purposes
+tenant_1        
+demo_store     
+test_tenant     
 ```
 
 **Usage Example:**
@@ -599,13 +599,14 @@ npm run test:coverage    # Coverage report with details
 
 ### Frontend (Current Status)
 - [x] Next.js 16.1+ setup (App Router)
-- [x] Server Components & Server Actions
+- [x] Server Components & Server Actions (SSR)
 - [x] Product listing with SSR
 - [x] Authentication flow with HTTP-only cookies
-- [x] UI with dark theme
+- [x] UI with dark theme & glassmorphism
 - [x] Edge middleware for route protection
-- [ ] Cart management UI
-- [ ] Checkout flow UI
+- [x] Cart management UI (fully responsive)
+- [x] Order management & history UI
+- [x] Checkout flow UI
 
 ---
 
@@ -660,6 +661,7 @@ npm run test:coverage    # Coverage report with details
 ```bash
 # API Development
 cd apps/api
+cd apps/web
 npm run dev          # Start dev server with watch
 npm run build        # Build TypeScript
 npm run start        # Start production server

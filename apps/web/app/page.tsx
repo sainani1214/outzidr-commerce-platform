@@ -1,11 +1,11 @@
-import FeaturedProducts from "@/components/FeaturedProducts";
 import Hero from "@/components/Hero";
+import Footer from "@/components/Footer";
 
 export default function HomePage() {
   return (
-    <main className="bg-[#0B0B0F] text-white">
+    <div className="bg-[#0B0B0F] text-white min-h-screen flex flex-col">
       <Hero />
-      <FeaturedProducts />
-    </main>
+      <Footer />
+    </div>
   );
 }

@@ -5,11 +5,13 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { loginAction } from '../_actions/auth';
 import { colors } from '@/styles/colors';
+import { useToast } from '../_providers/ToastProvider';
 
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get('redirect') || '/products';
+  const { showSuccess, showError } = useToast();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -24,10 +26,15 @@ export default function LoginPage() {
     const result = await loginAction(email, password);
 
     if (result.success) {
-      router.push(redirectTo);
-      router.refresh();
+      showSuccess('Login Successful!', 'Welcome back to Outzidr Commerce');
+      // Small delay to show the toast before navigation
+      setTimeout(() => {
+        router.push(redirectTo);
+        router.refresh();
+      }, 500);
     } else {
       setError(result.error || 'Login failed');
+      showError('Login Failed', result.error || 'Invalid credentials. Please try again.');
       setLoading(false);
     }
   };

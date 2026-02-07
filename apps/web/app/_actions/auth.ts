@@ -154,13 +154,13 @@ export async function registerAction(
   }
 }
 
-export async function logoutAction(): Promise<void> {
+export async function logoutAction(): Promise<{ success: boolean }> {
   const cookieStore = await cookies();
   
   cookieStore.delete('auth_token');
   cookieStore.delete('refresh_token');
 
-  redirect('/');
+  return { success: true };
 }
 
 export async function isAuthenticated(): Promise<boolean> {
@@ -168,6 +168,12 @@ export async function isAuthenticated(): Promise<boolean> {
   const token = cookieStore.get('auth_token');
   // Simple token existence check - proxy.ts already handles this
   return !!token;
+}
+
+export async function checkAuthStatus(): Promise<{ isAuthenticated: boolean }> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get('auth_token');
+  return { isAuthenticated: !!token };
 }
 
 export async function clearAuthCookies(): Promise<void> {

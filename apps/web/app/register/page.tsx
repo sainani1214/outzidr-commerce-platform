@@ -15,10 +15,52 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [passwordErrors, setPasswordErrors] = useState<string[]>([]);
+  const [showPasswordRequirements, setShowPasswordRequirements] = useState(false);
+
+  const validatePassword = (pwd: string): string[] => {
+    const errors: string[] = [];
+    
+    if (pwd.length < 8) {
+      errors.push('At least 8 characters');
+    }
+    if (!/[A-Z]/.test(pwd)) {
+      errors.push('One uppercase letter');
+    }
+    if (!/[a-z]/.test(pwd)) {
+      errors.push('One lowercase letter');
+    }
+    if (!/[0-9]/.test(pwd)) {
+      errors.push('One number');
+    }
+
+    return errors;
+  };
+
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newPassword = e.target.value;
+    setPassword(newPassword);
+    setPasswordErrors(validatePassword(newPassword));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    // Validate password
+    const errors = validatePassword(password);
+    if (errors.length > 0) {
+      setError('Password does not meet requirements');
+      setPasswordErrors(errors);
+      return;
+    }
+
+    // Validate password match
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
     setLoading(true);
 
     const result = await registerAction(name, email, password, confirmPassword);
@@ -132,21 +174,55 @@ export default function RegisterPage() {
                 type="password"
                 required
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={handlePasswordChange}
+                onFocus={() => setShowPasswordRequirements(true)}
                 className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2"
                 style={{
                   backgroundColor: colors.bg.surface,
                   color: colors.text.primary,
-                  border: `1px solid ${colors.border.subtle}`,
+                  border: `1px solid ${password && passwordErrors.length > 0 ? '#ef4444' : colors.border.subtle}`,
                 }}
                 placeholder="••••••••"
               />
-              <p 
-                className="mt-1 text-xs"
-                style={{ color: colors.text.muted }}
-              >
-                Must be at least 6 characters
-              </p>
+              {showPasswordRequirements && (
+                <div 
+                  className="mt-2 p-3 rounded-lg text-xs space-y-1"
+                  style={{ 
+                    backgroundColor: 'rgba(6, 182, 212, 0.05)',
+                    border: '1px solid rgba(6, 182, 212, 0.2)',
+                  }}
+                >
+                  <p 
+                    className="font-medium mb-1"
+                    style={{ color: colors.text.secondary }}
+                  >
+                    Password must contain:
+                  </p>
+                  <div className="space-y-0.5">
+                    {[
+                      { label: 'At least 8 characters', test: password.length >= 8 },
+                      { label: 'One uppercase letter (A-Z)', test: /[A-Z]/.test(password) },
+                      { label: 'One lowercase letter (a-z)', test: /[a-z]/.test(password) },
+                      { label: 'One number (0-9)', test: /[0-9]/.test(password) },
+                    ].map((requirement, idx) => (
+                      <div key={idx} className="flex items-center gap-2">
+                        {requirement.test ? (
+                          <svg className="w-4 h-4 flex-shrink-0" style={{ color: '#10b981' }} fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                        ) : (
+                          <svg className="w-4 h-4 flex-shrink-0" style={{ color: colors.text.muted }} fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                          </svg>
+                        )}
+                        <span style={{ color: requirement.test ? '#10b981' : colors.text.muted }}>
+                          {requirement.label}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div>
@@ -167,10 +243,32 @@ export default function RegisterPage() {
                 style={{
                   backgroundColor: colors.bg.surface,
                   color: colors.text.primary,
-                  border: `1px solid ${colors.border.subtle}`,
+                  border: `1px solid ${confirmPassword && password !== confirmPassword ? '#ef4444' : colors.border.subtle}`,
                 }}
                 placeholder="••••••••"
               />
+              {confirmPassword && password !== confirmPassword && (
+                <p 
+                  className="mt-1 text-xs flex items-center gap-1"
+                  style={{ color: '#ef4444' }}
+                >
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                  Passwords do not match
+                </p>
+              )}
+              {confirmPassword && password === confirmPassword && (
+                <p 
+                  className="mt-1 text-xs flex items-center gap-1"
+                  style={{ color: '#10b981' }}
+                >
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  Passwords match
+                </p>
+              )}
             </div>
 
             <button
