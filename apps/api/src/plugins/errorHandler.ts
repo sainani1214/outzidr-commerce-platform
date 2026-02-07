@@ -38,8 +38,17 @@ export const errorHandler = fp(async (app: FastifyInstance) => {
     }
 
     if ((error as any).code === 11000) {
+      const field = Object.keys((error as any).keyPattern || {})[0];
+      let message = 'Resource already exists';
+      
+      if (field === 'email') {
+        message = 'User with this email already exists';
+      } else if (field === 'tenantId' || (error as any).keyPattern?.userId) {
+        message = 'A cart already exists for this user';
+      }
+      
       return reply.status(409).send({
-        error: 'Resource already exists',
+        error: message,
         statusCode: 409,
       });
     }

@@ -1,12 +1,14 @@
 import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
-const TENANT_ID = process.env.NEXT_PUBLIC_TENANT_ID || 'tenant_1';
+const API_URL = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
+const TENANT_ID = process.env.TENANT_ID || process.env.NEXT_PUBLIC_TENANT_ID || 'tenant_1';
 
 export interface ApiResponse<T> {
   data?: T;
   error?: string;
   message?: string;
+  statusCode?: number;
   pagination?: {
     currentPage: number;
     totalPages: number;
@@ -56,6 +58,22 @@ export async function apiRequest<T>(
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
+      
+      // Handle 401 Unauthorized - token expired or invalid
+      // This will be caught by server components and redirect
+      if (response.status === 401) {
+        // For server-side requests, redirect immediately
+        if (typeof window === 'undefined') {
+          redirect('/login');
+        }
+        
+        return {
+          error: 'Authentication required',
+          message: error.message || 'Your session has expired. Please log in again.',
+          statusCode: 401,
+        } as ApiResponse<T> & { statusCode: number };
+      }
+      
       return {
         error: error.message || error.error || 'API request failed',
         message: error.message || response.statusText,
@@ -66,9 +84,20 @@ export async function apiRequest<T>(
       return { data: {} as T };
     }
 
-    const data = await response.json();
-    return data;
+    const result = await response.json();
+    
+    // Backend returns { success, data, pagination }
+    // Frontend expects { data, pagination }
+    return {
+      data: result.data,
+      pagination: result.pagination,
+    };
   } catch (error) {
+    // Re-throw NEXT_REDIRECT errors to allow Next.js to handle redirects
+    if (error instanceof Error && error.message.includes('NEXT_REDIRECT')) {
+      throw error;
+    }
+    
     console.error('API Request Error:', error);
     return {
       error: 'Network error',
@@ -111,16 +140,30 @@ export async function fetchProduct(id: string): Promise<ApiResponse<Product>> {
 }
 
 export interface CartItem {
-  id: string;
   productId: string;
+  sku: string;
+  name: string;
+  description?: string;
+  imageUrl?: string;
+  category?: string;
   quantity: number;
-  product: Product;
+  basePrice: number;
+  finalPrice: number;
+  discountAmount: number;
+  appliedRules?: string[];
+  subtotal: number;
 }
 
 export interface Cart {
   id: string;
+  tenantId: string;
   userId: string;
   items: CartItem[];
+  totalItems: number;
+  subtotal: number;
+  totalDiscount: number;
+  total: number;
+  status: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -155,17 +198,43 @@ export async function removeFromCart(productId: string): Promise<ApiResponse<Car
   });
 }
 
+export interface OrderItem {
+  productId: string;
+  sku: string;
+  name: string;
+  description?: string;
+  imageUrl?: string;
+  category?: string;
+  quantity: number;
+  basePrice: number;
+  finalPrice: number;
+  discountAmount: number;
+  subtotal: number;
+}
+
+export interface ShippingAddress {
+  name: string;
+  addressLine1: string;
+  addressLine2?: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  country: string;
+  phone: string;
+}
+
 export interface Order {
   id: string;
+  tenantId: string;
   userId: string;
-  items: Array<{
-    productId: string;
-    quantity: number;
-    price: number;
-  }>;
-  totalAmount: number;
+  orderNumber: string;
+  items: OrderItem[];
+  totalItems: number;
+  subtotal: number;
+  totalDiscount: number;
+  total: number;
   status: string;
-  shippingAddress: any;
+  shippingAddress: ShippingAddress;
   createdAt: string;
   updatedAt: string;
 }

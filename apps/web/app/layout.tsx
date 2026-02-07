@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import Navigation from "@/components/Navigation";
 import { colors } from "@/styles/colors";
+import { AuthProvider } from "./_providers/AuthProvider";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -24,11 +25,14 @@ export default function RootLayout({
       <body 
         className={`${inter.variable} font-sans antialiased`}
         style={{ backgroundColor: colors.bg.primary }}
+        suppressHydrationWarning
       >
-        <Navigation />
-        <main className="min-h-screen pt-16">
-          {children}
-        </main>
+        <AuthProvider>
+          <Navigation />
+          <main className="min-h-screen pt-16">
+            {children}
+          </main>
+        </AuthProvider>
       </body>
     </html>
   );

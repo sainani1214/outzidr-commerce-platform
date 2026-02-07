@@ -50,9 +50,10 @@ export async function buildApp(): Promise<FastifyInstance> {
   await registerSwagger(app);
 
   // Rate limiting (disabled in test environment)
+  // Global rate limit is VERY lenient - auth endpoints have their own strict limits
   if (process.env.NODE_ENV !== 'test') {
     await app.register(rateLimit, {
-      max: 300,
+      max: 1000,
       timeWindow: '15 minutes',
       keyGenerator: (req) => {
         return `${req.ip}:${req.headers['x-tenant-id'] || 'unknown'}`;
@@ -60,7 +61,7 @@ export async function buildApp(): Promise<FastifyInstance> {
       errorResponseBuilder: (req, context) => {
         return {
           success: false,
-          error: 'Too many requests',
+          error: 'Too many requests. Please try again later.',
           retryAfter: context.after,
         };
       },

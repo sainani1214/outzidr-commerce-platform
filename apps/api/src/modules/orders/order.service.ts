@@ -43,6 +43,7 @@ export class OrderService {
         throw new BadRequestError('Cart is empty or already checked out');
       }
 
+      // Validate products and ensure we have complete snapshots
       for (const item of cart.items) {
         const product = await ProductModel.findOne({
           _id: item.productId,
@@ -58,10 +59,18 @@ export class OrderService {
             `Insufficient inventory for ${item.name}. Only ${product.inventory} available`
           );
         }
+
+        // Ensure cart item has complete product snapshot (for legacy carts)
+        if (!item.description || !item.imageUrl) {
+          item.description = product.description;
+          item.imageUrl = product.imageUrl;
+          item.category = product.category;
+        }
       }
 
       const orderNumber = await this.generateOrderNumber(tenantId);
 
+      // Create order with complete product snapshots from cart
       const order = new OrderModel({
         tenantId,
         userId,
@@ -70,6 +79,9 @@ export class OrderService {
           productId: item.productId,
           sku: item.sku,
           name: item.name,
+          description: item.description,
+          imageUrl: item.imageUrl,
+          category: item.category,
           quantity: item.quantity,
           basePrice: item.basePrice,
           finalPrice: item.finalPrice,

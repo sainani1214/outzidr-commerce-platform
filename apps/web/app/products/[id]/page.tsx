@@ -1,28 +1,31 @@
-import ProductActions from "@/components/products/product-actions";
-import ProductHero from "@/components/products/product-hero";
-import ProductSpecs from "@/components/products/product-specs";
-import ProductSummary from "@/components/products/product-summary";
+import { redirect } from 'next/navigation';
+import { fetchProduct } from '@/lib/server-api';
+import { isAuthenticated } from '@/app/_actions/auth';
+import ProductDetailClient from './ProductDetailClient';
 
+interface PageProps {
+  params: Promise<{ id: string }>;
+}
 
-export default function ProductDetailsPage() {
-  return (
-    <main className="bg-[#0B0B0F] text-white min-h-screen">
-      
-      <section className="max-w-7xl mx-auto px-8 pt-28 grid grid-cols-1 lg:grid-cols-2 gap-16">
-        <ProductHero />
-        <div>
-          <ProductSummary />
-          <ProductActions />
+export default async function ProductDetailPage({ params }: PageProps) {
+  const authenticated = await isAuthenticated();
+  
+  if (!authenticated) {
+    redirect('/login');
+  }
+
+  const { id } = await params;
+  const response = await fetchProduct(id);
+
+  if (response.error || !response.data) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black flex items-center justify-center">
+        <div className="bg-red-500/10 border border-red-500/50 rounded-lg p-6 backdrop-blur-sm">
+          <p className="text-red-400">{response.error || 'Product not found'}</p>
         </div>
-      </section>
+      </div>
+    );
+  }
 
-      
-      <div className="mt-32 border-t border-zinc-800" />
-
-      
-      <section className="max-w-5xl mx-auto px-8 py-24">
-        <ProductSpecs />
-      </section>
-    </main>
-  );
+  return <ProductDetailClient product={response.data} />;
 }

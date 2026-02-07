@@ -13,23 +13,48 @@ export class CartService {
   }
 
   async getCart(tenantId: string, userId: string): Promise<Cart> {
-    let cart = await CartModel.findOne({ tenantId, userId, status: CartStatus.ACTIVE });
+    try {
+      let cart = await CartModel.findOne({ tenantId, userId });
 
-    if (!cart) {
-      cart = new CartModel({
-        tenantId,
-        userId,
-        items: [],
-        totalItems: 0,
-        subtotal: 0,
-        totalDiscount: 0,
-        total: 0,
-        status: CartStatus.ACTIVE,
-      });
-      await cart.save();
+      if (!cart) {
+        cart = new CartModel({
+          tenantId,
+          userId,
+          items: [],
+          totalItems: 0,
+          subtotal: 0,
+          totalDiscount: 0,
+          total: 0,
+          status: CartStatus.ACTIVE,
+        });
+        
+        try {
+          await cart.save();
+        } catch (saveError: any) {
+          if (saveError.code === 11000) {
+            cart = await CartModel.findOne({ tenantId, userId });
+            if (!cart) {
+              throw new Error('Failed to retrieve or create cart');
+            }
+          } else {
+            throw saveError;
+          }
+        }
+      } else if (cart.status !== CartStatus.ACTIVE) {
+        cart.items = [];
+        cart.totalItems = 0;
+        cart.subtotal = 0;
+        cart.totalDiscount = 0;
+        cart.total = 0;
+        cart.status = CartStatus.ACTIVE;
+        await cart.save();
+      }
+
+      return cart.toCartObject();
+    } catch (error: any) {
+      console.error('Error in getCart:', error);
+      throw error;
     }
-
-    return cart.toCartObject();
   }
 
   async addItem(tenantId: string, userId: string, data: AddToCartDTO): Promise<Cart> {
@@ -46,7 +71,18 @@ export class CartService {
     let cart = await CartModel.findOne({ tenantId, userId });
 
     if (!cart) {
-      cart = new CartModel({ tenantId, userId, items: [] });
+      cart = new CartModel({ 
+        tenantId, 
+        userId, 
+        items: [],
+        totalItems: 0,
+        subtotal: 0,
+        totalDiscount: 0,
+        total: 0,
+        status: CartStatus.ACTIVE,
+      });
+    } else if (cart.status !== CartStatus.ACTIVE) {
+      cart.status = CartStatus.ACTIVE;
     }
 
     const existingItemIndex = cart.items.findIndex(
@@ -85,6 +121,9 @@ export class CartService {
         productId: data.productId,
         sku: product.sku,
         name: product.name,
+        description: product.description,
+        imageUrl: product.imageUrl,
+        category: product.category,
         quantity: data.quantity,
         basePrice: product.price,
         finalPrice: priceResult.finalPrice / data.quantity,

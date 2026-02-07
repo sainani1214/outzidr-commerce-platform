@@ -3,8 +3,8 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
-const TENANT_ID = process.env.NEXT_PUBLIC_TENANT_ID || 'tenant_1';
+const API_URL = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
+const TENANT_ID = process.env.TENANT_ID || process.env.NEXT_PUBLIC_TENANT_ID || 'tenant_1';
 
 interface AuthResponse {
   success: boolean;
@@ -166,5 +166,12 @@ export async function logoutAction(): Promise<void> {
 export async function isAuthenticated(): Promise<boolean> {
   const cookieStore = await cookies();
   const token = cookieStore.get('auth_token');
+  // Simple token existence check - proxy.ts already handles this
   return !!token;
+}
+
+export async function clearAuthCookies(): Promise<void> {
+  const cookieStore = await cookies();
+  cookieStore.delete('auth_token');
+  cookieStore.delete('refresh_token');
 }

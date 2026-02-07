@@ -5,6 +5,9 @@ export interface IOrderItemDocument {
   productId: string;
   sku: string;
   name: string;
+  description?: string;
+  imageUrl?: string;
+  category?: string;
   quantity: number;
   basePrice: number;
   finalPrice: number;
@@ -42,6 +45,9 @@ const OrderItemSchema = new Schema<IOrderItemDocument>(
     productId: { type: String, required: true },
     sku: { type: String, required: true },
     name: { type: String, required: true },
+    description: { type: String },
+    imageUrl: { type: String },
+    category: { type: String },
     quantity: { type: Number, required: true, min: 1 },
     basePrice: { type: Number, required: true },
     finalPrice: { type: Number, required: true },
@@ -101,6 +107,9 @@ OrderSchema.methods.toOrderObject = function (): Order {
       productId: item.productId,
       sku: item.sku,
       name: item.name,
+      description: item.description,
+      imageUrl: item.imageUrl,
+      category: item.category,
       quantity: item.quantity,
       basePrice: item.basePrice,
       finalPrice: item.finalPrice,

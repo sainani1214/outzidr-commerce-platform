@@ -1,20 +1,13 @@
-import OrdersHeader from "@/components/orders/orders-header";
-import OrderCard from "@/components/orders/order-card";
+import { redirect } from 'next/navigation';
+import { isAuthenticated } from '../_actions/auth';
+import OrdersClient from './OrdersClient';
 
+export default async function OrdersPage() {
+  const authenticated = await isAuthenticated();
+  
+  if (!authenticated) {
+    redirect('/login');
+  }
 
-
-export default function OrdersPage() {
-  return (
-    <main className="min-h-screen bg-white text-[#0A0A0A]">
-      <div className="max-w-5xl mx-auto px-6 py-24">
-        <OrdersHeader />
-
-        <section className="mt-16 space-y-12">
-          <OrderCard />
-          <OrderCard />
-          <OrderCard />
-        </section>
-      </div>
-    </main>
-  );
+  return <OrdersClient />;
 }

@@ -7,6 +7,9 @@ export interface CartItem {
   productId: string;
   sku: string;
   name: string;
+  description?: string;
+  imageUrl?: string;
+  category?: string;
   quantity: number;
   basePrice: number;
   finalPrice: number;
