@@ -100,8 +100,9 @@ export async function login(
     });
 }
 
-export async function refresh(request: FastifyRequest, reply: FastifyReply) {
-  const oldToken = request.cookies.refreshToken;
+export async function refresh(request: FastifyRequest<{ Body: { refreshToken?: string } }>, reply: FastifyReply) {
+  // Support both cookie and body
+  const oldToken = request.body.refreshToken || request.cookies.refreshToken;
 
   if (!oldToken) {
     throw new UnauthorizedError("No refresh token provided");
@@ -119,11 +120,16 @@ export async function refresh(request: FastifyRequest, reply: FastifyReply) {
       ...COOKIE_OPTIONS,
       maxAge: 7 * 24 * 60 * 60,
     })
-    .send({ success: true });
+    .send({ 
+      success: true,
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+    });
 }
 
-export async function logout(request: FastifyRequest, reply: FastifyReply) {
-  const refreshToken = request.cookies.refreshToken;
+export async function logout(request: FastifyRequest<{ Body: { refreshToken?: string } }>, reply: FastifyReply) {
+  // Support both cookie and body
+  const refreshToken = request.body.refreshToken || request.cookies.refreshToken;
 
   if (refreshToken) {
     try {
@@ -137,5 +143,8 @@ export async function logout(request: FastifyRequest, reply: FastifyReply) {
   return reply
     .clearCookie("accessToken", COOKIE_OPTIONS)
     .clearCookie("refreshToken", COOKIE_OPTIONS)
-    .send({ success: true });
+    .send({ 
+      success: true,
+      message: "Logged out successfully"
+    });
 }

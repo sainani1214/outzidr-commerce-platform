@@ -8,13 +8,16 @@ export const createOrderSchema = {
     properties: {
       shippingAddress: {
         type: 'object',
-        required: ['street', 'city', 'state', 'zipCode', 'country'],
+        required: ['name', 'addressLine1', 'city', 'state', 'postalCode', 'country', 'phone'],
         properties: {
-          street: { type: 'string' },
+          name: { type: 'string' },
+          addressLine1: { type: 'string' },
+          addressLine2: { type: 'string' },
           city: { type: 'string' },
           state: { type: 'string' },
-          zipCode: { type: 'string' },
+          postalCode: { type: 'string' },
           country: { type: 'string' },
+          phone: { type: 'string' },
         },
       },
     },
