@@ -12,7 +12,7 @@ export default function CheckoutClient() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   const [formData, setFormData] = useState({
     name: '',
     addressLine1: '',
@@ -30,18 +30,15 @@ export default function CheckoutClient() {
 
   async function loadCart() {
     setLoading(true);
-    const response = await getCart();
-    
-    if (response.error) {
-      setError(response.error);
-    } else if (response.data) {
-      if (!response.data.items || response.data.items.length === 0) {
+    const res = await getCart();
+    if (res.error) setError(res.error);
+    else if (res.data) {
+      if (!res.data.items.length) {
         router.push('/cart');
         return;
       }
-      setCart(response.data);
+      setCart(res.data);
     }
-    
     setLoading(false);
   }
 
@@ -49,221 +46,234 @@ export default function CheckoutClient() {
     return cart?.total || 0;
   }
 
-  async function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSubmitting(true);
     setError(null);
 
-    const response = await createOrder(formData);
-    
-    if (response.error) {
-      setError(response.error);
+    const res = await createOrder(formData);
+    if (res.error) {
+      setError(res.error);
       setSubmitting(false);
     } else {
-      router.push(`/orders/${response.data?.id}`);
+      router.push(`/orders/${res.data?.id}`);
     }
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-linear-to-br from-gray-900 via-gray-800 to-black flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-400"></div>
-      </div>
+      <main className="min-h-screen bg-black flex items-center justify-center">
+        <div className="w-10 h-10 border-2 border-[#2A2A30] border-t-white rounded-full animate-spin" />
+      </main>
     );
   }
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-gray-900 via-gray-800 to-black">
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
-        <div className="mb-8">
+    <main className="min-h-screen bg-black text-white">
+      <div className="max-w-6xl mx-auto px-6 py-12">
+        {/* Header */}
+        <div className="mb-12">
           <button
             onClick={() => router.push('/cart')}
-            className="mb-4 text-cyan-400 hover:text-cyan-300 flex items-center gap-2 transition-colors"
+            className="text-sm text-[#9A9AA1] hover:text-white transition mb-3"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            Back to Cart
+            ← Back to cart
           </button>
-          <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-linear-to-r from-cyan-400 to-blue-500">
+          <h1 className="text-4xl font-semibold tracking-tight">
             Checkout
           </h1>
         </div>
 
         {error && (
-          <div className="mb-6 bg-red-500/10 border border-red-500/50 rounded-lg p-4 backdrop-blur-sm">
-            <p className="text-red-400">{error}</p>
+          <div className="mb-6 border border-red-500/40 bg-red-500/10 rounded-lg p-4 text-sm text-red-400">
+            {error}
           </div>
         )}
 
-        <div className="grid lg:grid-cols-3 gap-8">
+        <div className="grid lg:grid-cols-3 gap-10">
+          {/* Shipping Form */}
           <div className="lg:col-span-2">
-            <form onSubmit={handleSubmit} className="bg-white/5 backdrop-blur-lg rounded-2xl border border-white/10 p-6">
-              <h2 className="text-2xl font-bold text-white mb-6">Shipping Address</h2>
-              
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Full Name</label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-cyan-500 transition-colors"
-                    placeholder="John Doe"
+            <form
+              onSubmit={handleSubmit}
+              className="border border-[#1F1F23] rounded-2xl p-8"
+            >
+              <h2 className="text-xl font-medium mb-6">
+                Shipping information
+              </h2>
+
+              <div className="space-y-5">
+                <Input
+                  label="Full name"
+                  value={formData.name}
+                  onChange={(v) => setFormData({ ...formData, name: v })}
+                  placeholder="John Doe"
+                />
+
+                <Input
+                  label="Address line 1"
+                  value={formData.addressLine1}
+                  onChange={(v) => setFormData({ ...formData, addressLine1: v })}
+                  placeholder="123 Market Street"
+                />
+
+                <Input
+                  label="Address line 2"
+                  value={formData.addressLine2}
+                  onChange={(v) => setFormData({ ...formData, addressLine2: v })}
+                  placeholder="Apartment, suite, etc. (optional)"
+                  optional
+                />
+
+                <div className="grid sm:grid-cols-2 gap-5">
+                  <Input
+                    label="City"
+                    value={formData.city}
+                    onChange={(v) => setFormData({ ...formData, city: v })}
+                    placeholder="San Francisco"
+                  />
+                  <Input
+                    label="State"
+                    value={formData.state}
+                    onChange={(v) => setFormData({ ...formData, state: v })}
+                    placeholder="CA"
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Address Line 1</label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.addressLine1}
-                    onChange={(e) => setFormData({ ...formData, addressLine1: e.target.value })}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-cyan-500 transition-colors"
-                    placeholder="123 Main St"
+                <div className="grid sm:grid-cols-2 gap-5">
+                  <Input
+                    label="Postal code"
+                    value={formData.postalCode}
+                    onChange={(v) => setFormData({ ...formData, postalCode: v })}
+                    placeholder="94103"
+                  />
+                  <Input
+                    label="Country"
+                    value={formData.country}
+                    onChange={(v) => setFormData({ ...formData, country: v })}
+                    placeholder="United States"
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Address Line 2 (Optional)</label>
-                  <input
-                    type="text"
-                    value={formData.addressLine2}
-                    onChange={(e) => setFormData({ ...formData, addressLine2: e.target.value })}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-cyan-500 transition-colors"
-                    placeholder="Apt 4B"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">City</label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.city}
-                      onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-cyan-500 transition-colors"
-                      placeholder="New York"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">State</label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.state}
-                      onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-cyan-500 transition-colors"
-                      placeholder="NY"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Postal Code</label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.postalCode}
-                      onChange={(e) => setFormData({ ...formData, postalCode: e.target.value })}
-                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-cyan-500 transition-colors"
-                      placeholder="10001"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Country</label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.country}
-                      onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-cyan-500 transition-colors"
-                      placeholder="United States"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Phone Number</label>
-                  <input
-                    type="tel"
-                    required
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-cyan-500 transition-colors"
-                    placeholder="+1 (555) 123-4567"
-                  />
-                </div>
+                <Input
+                  label="Phone"
+                  value={formData.phone}
+                  onChange={(v) => setFormData({ ...formData, phone: v })}
+                  placeholder="+1 (555) 123-4567"
+                />
               </div>
 
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full mt-6 py-4 bg-linear-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 rounded-lg text-white font-semibold transition-all transform hover:scale-105 shadow-lg shadow-cyan-500/50 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                className="mt-8 w-full h-12 rounded-lg bg-white text-black text-sm font-medium hover:bg-[#E5E5EA] transition disabled:opacity-50"
               >
-                {submitting ? 'Processing...' : 'Place Order'}
+                {submitting ? 'Placing order…' : 'Place order'}
               </button>
             </form>
           </div>
 
+          {/* Summary */}
           <div className="lg:col-span-1">
-            <div className="bg-white/5 backdrop-blur-lg rounded-2xl border border-white/10 p-6 sticky top-4">
-              <h2 className="text-2xl font-bold text-white mb-6">Order Summary</h2>
-              
+            <div className="border border-[#1F1F23] rounded-2xl p-6 sticky top-24">
+              <h2 className="text-lg font-medium mb-6">
+                Order summary
+              </h2>
+
               <div className="space-y-4 mb-6">
                 {cart?.items.map((item) => (
-                  <div key={item.productId} className="flex gap-3">
-                    <div className="w-16 h-16 rounded-lg bg-linear-to-br from-cyan-500/20 to-blue-500/20 shrink-0 flex items-center justify-center">
+                  <div key={item.productId} className="flex gap-4">
+                    <div className="w-14 h-14 bg-[#0F0F12] rounded-lg flex items-center justify-center">
                       {item.imageUrl ? (
                         <img
                           src={item.imageUrl}
                           alt={item.name}
-                          className="w-full h-full object-cover rounded-lg"
+                          className="w-full h-full object-contain"
                         />
                       ) : (
-                        <svg className="w-8 h-8 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                        </svg>
+                        <span className="text-xs text-[#6E6E73]">—</span>
                       )}
                     </div>
+
                     <div className="flex-1">
-                      <p className="text-white font-medium text-sm">{item.name}</p>
-                      <p className="text-gray-400 text-xs">Qty: {item.quantity}</p>
-                      <p className="text-cyan-400 font-semibold text-sm mt-1">
-                        ${item.subtotal.toFixed(2)}
+                      <p className="text-sm font-medium">{item.name}</p>
+                      <p className="text-xs text-[#9A9AA1]">
+                        Qty {item.quantity}
                       </p>
                     </div>
+
+                    <p className="text-sm font-medium">
+                      ${item.subtotal.toFixed(2)}
+                    </p>
                   </div>
                 ))}
               </div>
 
-              <div className="border-t border-white/10 pt-4 space-y-2">
-                <div className="flex justify-between text-gray-400">
+              <div className="border-t border-[#2A2A30] pt-4 space-y-3 text-sm">
+                <div className="flex justify-between text-[#9A9AA1]">
                   <span>Subtotal</span>
-                  <span>${calculateTotal().toFixed(2)}</span>
+                  <span className="text-white">
+                    ${calculateTotal().toFixed(2)}
+                  </span>
                 </div>
-                <div className="flex justify-between text-gray-400">
+
+                <div className="flex justify-between text-[#9A9AA1]">
                   <span>Shipping</span>
                   <span>Free</span>
                 </div>
-                <div className="h-px bg-white/10 my-2"></div>
-                <div className="flex justify-between text-xl font-bold text-white">
+
+                <div className="flex justify-between font-medium text-base pt-3">
                   <span>Total</span>
-                  <span className="text-transparent bg-clip-text bg-linear-to-r from-cyan-400 to-blue-500">
-                    ${calculateTotal().toFixed(2)}
-                  </span>
+                  <span>${calculateTotal().toFixed(2)}</span>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
+    </main>
+  );
+}
+
+/* -------------------- */
+/* Input Component */
+/* -------------------- */
+
+function Input({
+  label,
+  value,
+  onChange,
+  placeholder,
+  optional,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  optional?: boolean;
+}) {
+  return (
+    <div>
+      <label className="block text-sm text-[#9A9AA1] mb-2">
+        {label}
+        {optional && <span className="text-xs ml-1">(optional)</span>}
+      </label>
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        required={!optional}
+        className="
+          w-full h-11 px-4
+          bg-[#0B0B0D]
+          border border-[#2A2A30]
+          rounded-lg
+          text-sm
+          placeholder-[#6E6E73]
+          focus:outline-none
+          focus:border-white
+          transition
+        "
+      />
     </div>
   );
 }

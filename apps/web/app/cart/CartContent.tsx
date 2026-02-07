@@ -10,233 +10,189 @@ interface CartContentProps {
   initialError?: string;
 }
 
-export default function CartContent({ initialCart = null, initialError }: CartContentProps) {
+export default function CartContent({
+  initialCart = null,
+  initialError,
+}: CartContentProps) {
   const router = useRouter();
   const [cart, setCart] = useState<Cart | null>(initialCart || null);
   const [error, setError] = useState<string | null>(initialError || null);
   const [updatingItems, setUpdatingItems] = useState<Set<string>>(new Set());
-  const [deleteConfirm, setDeleteConfirm] = useState<{ show: boolean; productId: string; productName: string }>({
-    show: false,
-    productId: '',
-    productName: ''
-  });
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    show: boolean;
+    productId: string;
+    productName: string;
+  }>({ show: false, productId: '', productName: '' });
 
-  // Only refresh cart when user performs an action, not on mount
   async function refreshCart() {
     const response = await getCart();
-    if (response.error) {
-      setError(response.error);
-    } else if (response.data) {
-      setCart(response.data);
-      setError(null);
-    }
+    if (response.error) setError(response.error);
+    else if (response.data) setCart(response.data);
   }
 
-  async function handleUpdateQuantity(productId: string, newQuantity: number) {
-    if (newQuantity < 1) return;
-    
-    setUpdatingItems(prev => new Set(prev).add(productId));
-    const response = await updateCartQuantity(productId, newQuantity);
-    
-    if (response.error) {
-      setError(response.error);
-    } else if (response.data) {
-      setCart(response.data);
-    }
-    
-    setUpdatingItems(prev => {
-      const newSet = new Set(prev);
-      newSet.delete(productId);
-      return newSet;
+  async function handleUpdateQuantity(productId: string, qty: number) {
+    if (qty < 1) return;
+    setUpdatingItems((p) => new Set(p).add(productId));
+    const res = await updateCartQuantity(productId, qty);
+    if (res.data) setCart(res.data);
+    if (res.error) setError(res.error);
+    setUpdatingItems((p) => {
+      const n = new Set(p);
+      n.delete(productId);
+      return n;
     });
   }
 
   async function handleRemove(productId: string) {
     setDeleteConfirm({ show: false, productId: '', productName: '' });
-    
-    setUpdatingItems(prev => new Set(prev).add(productId));
-    const response = await removeCartItem(productId);
-    
-    if (response.error) {
-      setError(response.error);
-    } else if (response.data) {
-      setCart(response.data);
-    }
-    
-    setUpdatingItems(prev => {
-      const newSet = new Set(prev);
-      newSet.delete(productId);
-      return newSet;
+    setUpdatingItems((p) => new Set(p).add(productId));
+    const res = await removeCartItem(productId);
+    if (res.data) setCart(res.data);
+    if (res.error) setError(res.error);
+    setUpdatingItems((p) => {
+      const n = new Set(p);
+      n.delete(productId);
+      return n;
     });
   }
 
-  function showDeleteConfirmation(productId: string, productName: string) {
-    setDeleteConfirm({ show: true, productId, productName });
-  }
-
   function calculateTotal() {
-    if (!cart) return 0;
-    return cart.total;
+    return cart?.total ?? 0;
   }
 
-  // No loading state needed - data comes from server!
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black flex items-center justify-center p-4">
-        <div className="bg-red-500/10 border border-red-500/50 rounded-lg p-6 backdrop-blur-sm max-w-md w-full text-center">
-          <div className="text-4xl mb-4">⚠️</div>
-          <h2 className="text-xl font-semibold text-red-400 mb-2">Error Loading Cart</h2>
-          <p className="text-red-300 mb-4">{error}</p>
+      <main className="min-h-screen bg-black flex items-center justify-center">
+        <div className="border border-[#2A2A30] rounded-xl p-8 text-center">
+          <h2 className="text-lg font-semibold text-white mb-2">
+            Unable to load cart
+          </h2>
+          <p className="text-sm text-[#9A9AA1] mb-6">{error}</p>
           <button
             onClick={refreshCart}
-            className="px-6 py-3 bg-red-500/20 hover:bg-red-500/30 rounded-lg transition-all font-medium"
+            className="h-10 px-6 rounded-lg bg-white text-black text-sm font-medium hover:bg-[#E5E5EA]"
           >
-            Try Again
+            Try again
           </button>
         </div>
-      </div>
+      </main>
     );
   }
 
   const isEmpty = !cart?.items || cart.items.length === 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black">
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
+    <main className="min-h-screen bg-black text-white">
+      <div className="max-w-6xl mx-auto px-6 py-12">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-12">
           <button
             onClick={() => router.push('/products')}
-            className="mb-4 text-cyan-400 hover:text-cyan-300 flex items-center gap-2 transition-colors text-sm sm:text-base"
+            className="text-sm text-[#9A9AA1] hover:text-white transition mb-3"
           >
-            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            Continue Shopping
+            ← Continue shopping
           </button>
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">
+          <h1 className="text-4xl font-semibold tracking-tight">
             Shopping Cart
           </h1>
         </div>
 
         {isEmpty ? (
-          <div className="bg-white/5 backdrop-blur-lg rounded-2xl border border-white/10 p-8 sm:p-12 text-center">
-            <div className="w-16 h-16 sm:w-24 sm:h-24 mx-auto mb-6 rounded-full bg-cyan-500/10 flex items-center justify-center">
-              <svg className="w-8 h-8 sm:w-12 sm:h-12 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-            </div>
-            <h2 className="text-xl sm:text-2xl font-semibold text-white mb-2">Your cart is empty</h2>
-            <p className="text-sm sm:text-base text-gray-400 mb-6">Add some products to get started</p>
+          <div className="border border-[#1F1F23] rounded-2xl p-12 text-center">
+            <p className="text-[#9A9AA1] mb-6">Your cart is empty.</p>
             <button
               onClick={() => router.push('/products')}
-              className="px-6 py-3 text-sm sm:text-base bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 rounded-lg text-white font-semibold transition-all transform hover:scale-105"
+              className="h-11 px-8 rounded-lg bg-white text-black text-sm font-medium hover:bg-[#E5E5EA]"
             >
-              Browse Products
+              Browse products
             </button>
           </div>
         ) : (
-          <div className="grid lg:grid-cols-3 gap-6 sm:gap-8">
-            {/* Cart Items */}
-            <div className="lg:col-span-2 space-y-4">
+          <div className="grid lg:grid-cols-3 gap-10">
+            {/* Items */}
+            <div className="lg:col-span-2 space-y-6">
               {cart.items.map((item) => {
-                const isUpdating = updatingItems.has(item.productId);
-                
+                const updating = updatingItems.has(item.productId);
                 return (
                   <div
                     key={item.productId}
-                    className={`bg-white/5 backdrop-blur-lg rounded-2xl border border-white/10 p-4 sm:p-6 transition-all ${
-                      isUpdating ? 'opacity-50' : ''
+                    className={`border border-[#1F1F23] rounded-2xl p-6 ${
+                      updating ? 'opacity-50' : ''
                     }`}
                   >
-                    <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
-                      {/* Product Image */}
-                      <div className="w-full sm:w-24 h-32 sm:h-24 rounded-lg bg-gradient-to-br from-cyan-500/20 to-blue-500/20 flex items-center justify-center shrink-0">
+                    <div className="flex gap-6">
+                      {/* Image */}
+                      <div className="w-24 h-24 bg-[#0F0F12] rounded-xl flex items-center justify-center">
                         {item.imageUrl ? (
                           <img
                             src={item.imageUrl}
                             alt={item.name}
-                            className="w-full h-full object-cover rounded-lg"
+                            className="w-full h-full object-contain"
                           />
                         ) : (
-                          <svg className="w-12 h-12 sm:w-10 sm:h-10 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                          </svg>
+                          <span className="text-xs text-[#6E6E73]">
+                            No image
+                          </span>
                         )}
                       </div>
 
-                      {/* Product Details & Controls */}
-                      <div className="flex-1 min-w-0 flex flex-col">
-                        {/* Product Info */}
-                        <div className="flex justify-between items-start gap-4 mb-3">
-                          <div className="flex-1 min-w-0">
-                            <h3 className="text-lg sm:text-xl font-semibold text-white mb-1 truncate">
-                              {item.name}
-                            </h3>
-                            <p className="text-gray-400 text-xs sm:text-sm mb-2">SKU: {item.sku}</p>
-                            <p className="text-xl sm:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">
-                              ${item.finalPrice.toFixed(2)}
-                            </p>
-                          </div>
-
-                          {/* Delete Button - Desktop */}
+                      {/* Info */}
+                      <div className="flex-1">
+                        <div className="flex justify-between mb-2">
+                          <h3 className="text-lg font-medium">
+                            {item.name}
+                          </h3>
                           <button
-                            onClick={() => showDeleteConfirmation(item.productId, item.name)}
-                            disabled={isUpdating}
-                            className="hidden sm:block text-red-400 hover:text-red-300 transition-colors disabled:opacity-50 p-2"
-                            title="Remove item"
+                            onClick={() =>
+                              setDeleteConfirm({
+                                show: true,
+                                productId: item.productId,
+                                productName: item.name,
+                              })
+                            }
+                            className="text-sm text-[#9A9AA1] hover:text-red-400"
                           >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
+                            Remove
                           </button>
                         </div>
 
-                        {/* Quantity Controls & Subtotal */}
-                        <div className="flex items-center justify-between mt-auto">
-                          <div className="flex items-center gap-2 sm:gap-3 bg-white/5 rounded-lg p-1">
+                        <p className="text-sm text-[#9A9AA1] mb-4">
+                          ${item.finalPrice.toFixed(2)}
+                        </p>
+
+                        <div className="flex items-center justify-between">
+                          {/* Qty */}
+                          <div className="flex items-center border border-[#2A2A30] rounded-lg">
                             <button
-                              onClick={() => handleUpdateQuantity(item.productId, item.quantity - 1)}
-                              disabled={isUpdating || item.quantity <= 1}
-                              className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-white/10 hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center transition-all"
+                              onClick={() =>
+                                handleUpdateQuantity(
+                                  item.productId,
+                                  item.quantity - 1
+                                )
+                              }
+                              className="w-10 h-10 hover:bg-[#1A1A1F]"
                             >
-                              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
-                              </svg>
+                              −
                             </button>
-                            
-                            <span className="w-10 sm:w-12 text-center text-white font-semibold text-sm sm:text-base">
+                            <div className="w-10 text-center text-sm">
                               {item.quantity}
-                            </span>
-                            
+                            </div>
                             <button
-                              onClick={() => handleUpdateQuantity(item.productId, item.quantity + 1)}
-                              disabled={isUpdating}
-                              className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-white/10 hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center transition-all"
+                              onClick={() =>
+                                handleUpdateQuantity(
+                                  item.productId,
+                                  item.quantity + 1
+                                )
+                              }
+                              className="w-10 h-10 hover:bg-[#1A1A1F]"
                             >
-                              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                              </svg>
+                              +
                             </button>
                           </div>
 
-                          <div className="flex items-center gap-3">
-                            <p className="text-base sm:text-lg font-semibold text-white">
-                              ${item.subtotal.toFixed(2)}
-                            </p>
-
-                            {/* Delete Button - Mobile */}
-                            <button
-                              onClick={() => showDeleteConfirmation(item.productId, item.name)}
-                              disabled={isUpdating}
-                              className="sm:hidden text-red-400 hover:text-red-300 transition-colors disabled:opacity-50 p-2"
-                              title="Remove item"
-                            >
-                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
-                            </button>
-                          </div>
+                          <p className="text-sm font-medium">
+                            ${item.subtotal.toFixed(2)}
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -245,80 +201,71 @@ export default function CartContent({ initialCart = null, initialError }: CartCo
               })}
             </div>
 
-            {/* Order Summary */}
-            <div className="lg:col-span-1">
-              <div className="bg-white/5 backdrop-blur-lg rounded-2xl border border-white/10 p-4 sm:p-6 lg:sticky lg:top-24">
-                <h2 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6">Order Summary</h2>
-                
-                <div className="space-y-3 sm:space-y-4 mb-4 sm:mb-6">
-                  <div className="flex justify-between text-sm sm:text-base text-gray-400">
-                    <span>Subtotal</span>
-                    <span className="text-white">${calculateTotal().toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between text-sm sm:text-base text-gray-400">
-                    <span>Shipping</span>
-                    <span className="text-xs sm:text-sm">Calculated at checkout</span>
-                  </div>
-                  <div className="h-px bg-white/10"></div>
-                  <div className="flex justify-between text-lg sm:text-xl font-bold text-white">
-                    <span>Total</span>
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">
-                      ${calculateTotal().toFixed(2)}
-                    </span>
-                  </div>
+            {/* Summary */}
+            <div className="border border-[#1F1F23] rounded-2xl p-6 h-fit sticky top-24">
+              <h2 className="text-lg font-medium mb-6">Order Summary</h2>
+
+              <div className="space-y-4 text-sm">
+                <div className="flex justify-between text-[#9A9AA1]">
+                  <span>Subtotal</span>
+                  <span className="text-white">
+                    ${calculateTotal().toFixed(2)}
+                  </span>
                 </div>
-
-                <button
-                  onClick={() => router.push('/checkout')}
-                  className="w-full py-3 sm:py-4 text-sm sm:text-base bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 rounded-lg text-white font-semibold transition-all transform hover:scale-105 shadow-lg shadow-cyan-500/50"
-                >
-                  Proceed to Checkout
-                </button>
-
-                <button
-                  onClick={() => router.push('/products')}
-                  className="w-full mt-3 py-2.5 sm:py-3 text-sm sm:text-base bg-white/5 hover:bg-white/10 rounded-lg text-white font-semibold transition-all border border-white/10"
-                >
-                  Continue Shopping
-                </button>
+                <div className="flex justify-between text-[#9A9AA1]">
+                  <span>Shipping</span>
+                  <span>Calculated at checkout</span>
+                </div>
+                <div className="border-t border-[#2A2A30] pt-4 flex justify-between font-medium">
+                  <span>Total</span>
+                  <span>${calculateTotal().toFixed(2)}</span>
+                </div>
               </div>
+
+              <button
+                onClick={() => router.push('/checkout')}
+                className="mt-8 w-full h-12 rounded-lg bg-white text-black text-sm font-medium hover:bg-[#E5E5EA]"
+              >
+                Checkout
+              </button>
+
+              <button
+                onClick={() => router.push('/products')}
+                className="mt-3 w-full h-11 rounded-lg border border-[#2A2A30] text-sm hover:bg-[#1A1A1F]"
+              >
+                Continue shopping
+              </button>
             </div>
           </div>
         )}
 
-        {/* Delete Confirmation Modal */}
+        {/* Delete Modal */}
         {deleteConfirm.show && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-gradient-to-br from-gray-900 to-gray-800 border border-red-500/30 rounded-2xl shadow-2xl max-w-md w-full p-6 sm:p-8 animate-in zoom-in duration-200">
-              {/* Icon */}
-              <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 sm:mb-6 rounded-full bg-red-500/20 flex items-center justify-center">
-                <svg className="w-8 h-8 sm:w-10 sm:h-10 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-              </div>
-
-              {/* Content */}
-              <h3 className="text-xl sm:text-2xl font-bold text-white text-center mb-2 sm:mb-3">
-                Remove Item?
+          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+            <div className="bg-[#0B0B0D] border border-[#2A2A30] rounded-2xl p-8 max-w-sm w-full text-center">
+              <h3 className="text-lg font-semibold mb-2">
+                Remove item?
               </h3>
-              <p className="text-sm sm:text-base text-gray-300 text-center mb-4">
-                Are you sure you want to remove
-              </p>
-              <p className="text-base sm:text-lg font-semibold text-cyan-400 text-center mb-6 sm:mb-8 px-2">
+              <p className="text-sm text-[#9A9AA1] mb-6">
                 {deleteConfirm.productName}
               </p>
 
-              {/* Buttons */}
-              <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex gap-3">
                 <button
-                  onClick={() => setDeleteConfirm({ show: false, productId: '', productName: '' })}
-                  className="flex-1 px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base bg-white/10 hover:bg-white/20 rounded-lg text-white font-semibold transition-all border border-white/20"
+                  onClick={() =>
+                    setDeleteConfirm({
+                      show: false,
+                      productId: '',
+                      productName: '',
+                    })
+                  }
+                  className="flex-1 h-10 rounded-lg border border-[#2A2A30] text-sm hover:bg-[#1A1A1F]"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={() => handleRemove(deleteConfirm.productId)}
-                  className="flex-1 px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 rounded-lg text-white font-semibold transition-all transform hover:scale-105 shadow-lg shadow-red-500/50"
+                  className="flex-1 h-10 rounded-lg bg-white text-black text-sm hover:bg-[#E5E5EA]"
                 >
                   Remove
                 </button>
@@ -327,6 +274,6 @@ export default function CartContent({ initialCart = null, initialError }: CartCo
           </div>
         )}
       </div>
-    </div>
+    </main>
   );
 }

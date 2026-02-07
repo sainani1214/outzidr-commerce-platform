@@ -14,7 +14,7 @@ export default function ProductDetailClient({ product }: Props) {
   const router = useRouter();
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
 
   async function handleAddToCart() {
     if (quantity < 1 || quantity > product.inventory) return;
@@ -25,159 +25,165 @@ export default function ProductDetailClient({ product }: Props) {
     const response = await addToCart(product.id, quantity);
 
     if (response.error) {
-      setMessage({ type: 'error', text: response.error });
+      setMessage(response.error);
     } else {
-      setMessage({ type: 'success', text: `Added ${quantity} item(s) to cart!` });
-      setTimeout(() => {
-        router.push('/cart');
-      }, 1000);
+      setMessage('Added to cart');
+      setTimeout(() => router.push('/cart'), 800);
     }
 
     setLoading(false);
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black">
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
+    <main className="min-h-screen bg-black text-white">
+      <div className="max-w-7xl mx-auto px-6 py-14">
+        {/* Back */}
         <button
           onClick={() => router.push('/products')}
-          className="mb-6 text-cyan-400 hover:text-cyan-300 flex items-center gap-2 transition-colors"
+          className="mb-12 flex items-center gap-2 text-sm text-[#9A9AA1] hover:text-white transition"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-          Back to Products
+          ← Back to products
         </button>
 
-        <div className="grid lg:grid-cols-2 gap-12">
-          {/* Product Image */}
-          <div className="bg-white/5 backdrop-blur-lg rounded-2xl border border-white/10 p-8 flex items-center justify-center">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
+          {/* IMAGE */}
+          <div className="bg-[#0F0F12] rounded-2xl p-10 flex items-center justify-center">
             {product.imageUrl ? (
               <div className="relative w-full aspect-square">
                 <Image
                   src={product.imageUrl}
                   alt={product.name}
                   fill
-                  className="object-contain rounded-lg"
                   priority
+                  className="object-contain"
                 />
               </div>
             ) : (
-              <div className="w-full aspect-square bg-gradient-to-br from-cyan-500/20 to-blue-500/20 rounded-lg flex items-center justify-center">
-                <svg className="w-32 h-32 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                </svg>
+              <div className="w-full aspect-square flex items-center justify-center text-[#6E6E73]">
+                No image available
               </div>
             )}
           </div>
 
-          {/* Product Details */}
-          <div className="bg-white/5 backdrop-blur-lg rounded-2xl border border-white/10 p-8">
-            <div className="mb-6">
-              {product.category && (
-                <span className="inline-block px-3 py-1 bg-cyan-500/20 text-cyan-400 rounded-full text-sm font-medium mb-3">
-                  {product.category}
-                </span>
-              )}
-              <h1 className="text-4xl font-bold text-white mb-2">{product.name}</h1>
-              <p className="text-gray-400 text-sm">SKU: {product.sku}</p>
+          {/* DETAILS */}
+          <div className="flex flex-col justify-center">
+            {/* Category */}
+            {product.category && (
+              <span className="text-sm text-[#9A9AA1] mb-3">
+                {product.category}
+              </span>
+            )}
+
+            {/* Title */}
+            <h1 className="text-5xl font-semibold tracking-tight mb-6">
+              {product.name}
+            </h1>
+
+            {/* Price */}
+            <p className="text-4xl font-semibold mb-8">
+              ${product.price.toFixed(2)}
+            </p>
+
+            {/* Description */}
+            <p className="text-[15px] leading-relaxed text-[#9A9AA1] max-w-xl mb-10">
+              {product.description}
+            </p>
+
+            {/* Availability */}
+            <div className="flex items-center gap-2 text-sm mb-10">
+              <span className="text-[#9A9AA1]">Availability:</span>
+              <span
+                className={
+                  product.inventory > 0
+                    ? 'text-emerald-400'
+                    : 'text-red-400'
+                }
+              >
+                {product.inventory > 0
+                  ? `${product.inventory} in stock`
+                  : 'Out of stock'}
+              </span>
             </div>
 
-            <div className="mb-6">
-              <p className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">
-                ${product.price.toFixed(2)}
-              </p>
-            </div>
+            {/* Quantity */}
+            <div className="mb-12">
+              <label className="block text-sm text-[#9A9AA1] mb-2">
+                Quantity
+              </label>
 
-            <div className="mb-6">
-              <p className="text-gray-300 leading-relaxed">{product.description}</p>
-            </div>
-
-            <div className="mb-6 p-4 bg-white/5 rounded-lg border border-white/10">
-              <div className="flex items-center justify-between">
-                <span className="text-gray-400">Availability:</span>
-                <span className={`font-semibold ${product.inventory > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                  {product.inventory > 0 ? `${product.inventory} in stock` : 'Out of stock'}
-                </span>
-              </div>
-            </div>
-
-            {/* Quantity Selector */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-300 mb-2">Quantity</label>
-              <div className="flex items-center gap-4">
+              <div className="inline-flex items-center rounded-lg border border-[#2A2A30] overflow-hidden">
                 <button
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
                   disabled={quantity <= 1}
-                  className="w-12 h-12 rounded-lg bg-white/10 hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center transition-all"
+                  className="w-12 h-12 text-white hover:bg-[#1A1A1F] disabled:opacity-40"
                 >
-                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
-                  </svg>
+                  −
                 </button>
-                
-                <input
-                  type="number"
-                  min="1"
-                  max={product.inventory}
-                  value={quantity}
-                  onChange={(e) => setQuantity(Math.max(1, Math.min(product.inventory, parseInt(e.target.value) || 1)))}
-                  className="w-20 h-12 text-center bg-white/5 border border-white/10 rounded-lg text-white font-semibold focus:outline-none focus:border-cyan-500"
-                />
-                
+
+                <div className="w-14 text-center text-sm font-medium">
+                  {quantity}
+                </div>
+
                 <button
-                  onClick={() => setQuantity(Math.min(product.inventory, quantity + 1))}
+                  onClick={() =>
+                    setQuantity(Math.min(product.inventory, quantity + 1))
+                  }
                   disabled={quantity >= product.inventory}
-                  className="w-12 h-12 rounded-lg bg-white/10 hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center transition-all"
+                  className="w-12 h-12 text-white hover:bg-[#1A1A1F] disabled:opacity-40"
                 >
-                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
+                  +
                 </button>
               </div>
             </div>
 
-            {/* Messages */}
+            {/* Message */}
             {message && (
-              <div className={`mb-4 p-4 rounded-lg ${
-                message.type === 'success' 
-                  ? 'bg-green-500/10 border border-green-500/50 text-green-400' 
-                  : 'bg-red-500/10 border border-red-500/50 text-red-400'
-              }`}>
-                {message.text}
+              <div className="mb-4 text-sm text-emerald-400">
+                {message}
               </div>
             )}
 
-            {/* Add to Cart Button */}
+            {/* CTA */}
             <button
               onClick={handleAddToCart}
               disabled={loading || product.inventory === 0}
-              className="w-full py-4 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 rounded-lg text-white font-semibold transition-all transform hover:scale-105 shadow-lg shadow-cyan-500/50 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2"
+              className="
+                w-full
+                h-12
+                rounded-lg
+                bg-white
+                text-black
+                text-sm
+                font-medium
+                hover:bg-[#E5E5EA]
+                transition
+                disabled:opacity-40
+                disabled:cursor-not-allowed
+              "
             >
-              {loading ? (
-                <>
-                  <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
-                  Adding...
-                </>
-              ) : (
-                <>
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
-                  Add to Cart
-                </>
-              )}
+              {loading ? 'Adding…' : 'Add to cart'}
             </button>
 
             <button
               onClick={() => router.push('/cart')}
-              className="w-full mt-3 py-3 bg-white/5 hover:bg-white/10 rounded-lg text-white font-semibold transition-all border border-white/10"
+              className="
+                mt-3
+                w-full
+                h-12
+                rounded-lg
+                border
+                border-[#2A2A30]
+                text-white
+                text-sm
+                hover:bg-[#1A1A1F]
+                transition
+              "
             >
-              View Cart
+              View cart
             </button>
           </div>
         </div>
       </div>
-    </div>
+    </main>
   );
 }

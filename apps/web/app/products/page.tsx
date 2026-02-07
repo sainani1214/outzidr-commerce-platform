@@ -11,7 +11,7 @@ interface PageProps {
 }
 
 export default async function ProductsPage({ searchParams }: PageProps) {
-  // Authentication check - will redirect if token is invalid
+  
   const authenticated = await isAuthenticated();
   if (!authenticated) {
     redirect('/login');
@@ -21,7 +21,7 @@ export default async function ProductsPage({ searchParams }: PageProps) {
   const page = Number(params.page) || 1;
   const category = params.category;
 
-  // API call will automatically redirect if 401 on server-side
+  
   const response = await fetchProducts({ page, limit: 12, category });
 
   if (response.error) {

@@ -19,7 +19,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
 
   if (response.error || !response.data) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black flex items-center justify-center">
+      <div className="min-h-screen bg-linear-to-br from-gray-900 via-gray-800 to-black flex items-center justify-center">
         <div className="bg-red-500/10 border border-red-500/50 rounded-lg p-6 backdrop-blur-sm">
           <p className="text-red-400">{response.error || 'Product not found'}</p>
         </div>
