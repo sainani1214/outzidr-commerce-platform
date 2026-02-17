@@ -3,6 +3,10 @@ import { isAuthenticated } from '../_actions/auth';
 import { fetchCart } from '@/lib/server-api';
 import CartContent from './CartContent';
 
+// Disable caching for this page to always show fresh cart data
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default async function CartPage() {
   const authenticated = await isAuthenticated();
   

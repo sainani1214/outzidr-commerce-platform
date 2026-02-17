@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { getCart, updateCartQuantity, removeCartItem } from '../_actions/cart';
 import type { Cart } from '@/lib/server-api';
 
@@ -15,8 +15,10 @@ export default function CartContent({
   initialError,
 }: CartContentProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [cart, setCart] = useState<Cart | null>(initialCart || null);
   const [error, setError] = useState<string | null>(initialError || null);
+  const [priceUpdateNotification, setPriceUpdateNotification] = useState(false);
   const [updatingItems, setUpdatingItems] = useState<Set<string>>(new Set());
   const [deleteConfirm, setDeleteConfirm] = useState<{
     show: boolean;
@@ -29,6 +31,31 @@ export default function CartContent({
     if (response.error) setError(response.error);
     else if (response.data) setCart(response.data);
   }
+
+  // Update cart when initialCart changes (SSR provides fresh data)
+  useEffect(() => {
+    if (initialCart) {
+      setCart(initialCart);
+    }
+  }, [initialCart]);
+
+  // Check if user came back due to price change
+  useEffect(() => {
+    const priceChanged = searchParams.get('priceChanged');
+    if (priceChanged === 'true') {
+      setPriceUpdateNotification(true);
+      
+      // SSR already fetched fresh data, just clean up URL
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
+      
+      // Auto-dismiss notification after 10 seconds
+      setTimeout(() => {
+        setPriceUpdateNotification(false);
+      }, 10000);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   async function handleUpdateQuantity(productId: string, qty: number) {
     if (qty < 1) return;
@@ -96,6 +123,28 @@ export default function CartContent({
             Shopping Cart
           </h1>
         </div>
+
+        {/* Price Update Notification */}
+        {priceUpdateNotification && (
+          <div className="mb-6 border border-yellow-500/40 bg-yellow-500/10 rounded-lg p-4 text-sm text-yellow-400">
+            <div className="flex items-start gap-3">
+              <span className="text-lg">⚠️</span>
+              <div className="flex-1">
+                <p className="font-medium mb-1">Cart Updated with Current Prices</p>
+                <p className="text-yellow-300/80">
+                  One or more product prices have changed since you last viewed your cart. 
+                  The prices shown below reflect the current pricing.
+                </p>
+              </div>
+              <button
+                onClick={() => setPriceUpdateNotification(false)}
+                className="text-yellow-400 hover:text-yellow-300 text-xl leading-none"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+        )}
 
         {isEmpty ? (
           <div className="border border-[#1F1F23] rounded-2xl p-12 text-center">

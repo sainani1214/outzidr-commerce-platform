@@ -8,11 +8,12 @@ import {
   OrderStatus,
 } from './order.types';
 import { productService } from '../products/product.service';
-import { CartModel } from '../cart/cart.model';
+import { pricingService } from '../pricing/pricing.service';
+import { CartModel, ICartDocument } from '../cart/cart.model';
 import { ProductModel } from '../products/product.model';
 import { CartStatus } from '../cart/cart.types';
 import mongoose from 'mongoose';
-import { NotFoundError, BadRequestError } from '../../utils/errors';
+import { NotFoundError, BadRequestError, ConflictError } from '../../utils/errors';
 
 export class OrderService {
   private async generateOrderNumber(tenantId: string): Promise<string> {
@@ -24,15 +25,209 @@ export class OrderService {
     return `ORD-${year}${month}-${orderNum}`;
   }
 
+ 
+
+  /**
+   * Revalidates cart pricing before checkout to prevent orders with stale prices
+   * Compares stored cart prices with current product prices and pricing rules
+   * Throws ConflictError if prices have changed and updates the cart
+   */
+  private async revalidateCartPricing(
+    tenantId: string,
+    cart: ICartDocument,
+    session: mongoose.mongo.ClientSession
+  ): Promise<void> {
+    let priceChanged = false;
+
+    for (const item of cart.items) {
+      // Fetch latest product data
+      const product = await ProductModel.findOne({
+        _id: item.productId,
+        tenantId,
+      }).session(session);
+
+      if (!product || !product.isActive) {
+        throw new BadRequestError(`Product ${item.name} is no longer available`);
+      }
+
+      // Re-calculate pricing with current product data and quantity
+      const priceResult = await pricingService.calculatePrice(tenantId, {
+        productId: item.productId,
+        quantity: item.quantity,
+        basePrice: product.price,
+        inventory: product.inventory,
+      });
+
+      // Calculate per-item prices for comparison
+      // priceResult.finalPrice is total for all items, so divide by quantity
+      const calculatedFinalPricePerItem = priceResult.finalPrice / item.quantity;
+      const calculatedDiscountPerItem = priceResult.discountAmount / item.quantity;
+      const calculatedSubtotal = priceResult.finalPrice;
+
+      // Compare recalculated prices with cart's stored prices
+      // Use toFixed to avoid floating point precision issues
+      const storedFinalPrice = Number(item.finalPrice.toFixed(2));
+      const newFinalPrice = Number(calculatedFinalPricePerItem.toFixed(2));
+      const storedBasePrice = Number(item.basePrice.toFixed(2));
+      const newBasePrice = Number(product.price.toFixed(2));
+
+      // Check if either base price or final price has changed
+      if (storedFinalPrice !== newFinalPrice || storedBasePrice !== newBasePrice) {
+        priceChanged = true;
+
+        // Update cart item with latest pricing
+        item.basePrice = product.price;
+        item.finalPrice = calculatedFinalPricePerItem;
+        item.discountAmount = calculatedDiscountPerItem;
+        item.subtotal = calculatedSubtotal;
+        item.appliedRules = priceResult.appliedRules.map((rule) => rule.ruleName);
+      }
+
+      // Also update product metadata if changed
+      if (
+        item.description !== product.description ||
+        item.imageUrl !== product.imageUrl ||
+        item.category !== product.category
+      ) {
+        item.description = product.description;
+        item.imageUrl = product.imageUrl;
+        item.category = product.category;
+      }
+    }
+
+    // If any price changed, update cart and abort checkout
+    if (priceChanged) {
+      // Recalculate cart totals
+      cart.totalItems = cart.items.reduce((sum, item) => sum + item.quantity, 0);
+      cart.subtotal = cart.items.reduce((sum, item) => sum + item.quantity * item.basePrice, 0);
+      cart.totalDiscount = cart.items.reduce(
+        (sum, item) => sum + item.discountAmount * item.quantity,
+        0
+      );
+      cart.total = cart.items.reduce((sum, item) => sum + item.subtotal, 0);
+
+      // Explicitly mark nested items array as modified
+      cart.markModified('items');
+      
+      // Save updated cart within transaction
+      await cart.save({ session });
+
+      // Abort checkout with 409 Conflict error
+      throw new ConflictError(
+        'Pricing has changed. Please review your cart before checkout.'
+      );
+    }
+  }
+
+  /**
+   * Revalidates cart pricing WITHOUT transaction
+   * This ensures cart updates persist even when order creation is aborted
+   */
+  private async revalidateCartPricingWithoutTransaction(
+    tenantId: string,
+    cart: ICartDocument
+  ): Promise<void> {
+    let priceChanged = false;
+
+    for (const item of cart.items) {
+      // Fetch latest product data
+      const product = await ProductModel.findOne({
+        _id: item.productId,
+        tenantId,
+      });
+
+      if (!product || !product.isActive) {
+        throw new BadRequestError(`Product ${item.name} is no longer available`);
+      }
+
+      // Re-calculate pricing with current product data and quantity
+      const priceResult = await pricingService.calculatePrice(tenantId, {
+        productId: item.productId,
+        quantity: item.quantity,
+        basePrice: product.price,
+        inventory: product.inventory,
+      });
+
+      // Calculate per-item prices for comparison
+      const calculatedFinalPricePerItem = priceResult.finalPrice / item.quantity;
+      const calculatedDiscountPerItem = priceResult.discountAmount / item.quantity;
+      const calculatedSubtotal = priceResult.finalPrice;
+
+      // Compare recalculated prices with cart's stored prices
+      const storedFinalPrice = Number(item.finalPrice.toFixed(2));
+      const newFinalPrice = Number(calculatedFinalPricePerItem.toFixed(2));
+      const storedBasePrice = Number(item.basePrice.toFixed(2));
+      const newBasePrice = Number(product.price.toFixed(2));
+
+      // Check if either base price or final price has changed
+      if (storedFinalPrice !== newFinalPrice || storedBasePrice !== newBasePrice) {
+        priceChanged = true;
+
+        // Update cart item with latest pricing
+        item.basePrice = product.price;
+        item.finalPrice = calculatedFinalPricePerItem;
+        item.discountAmount = calculatedDiscountPerItem;
+        item.subtotal = calculatedSubtotal;
+        item.appliedRules = priceResult.appliedRules.map((rule) => rule.ruleName);
+      }
+
+      // Also update product metadata if changed
+      if (
+        item.description !== product.description ||
+        item.imageUrl !== product.imageUrl ||
+        item.category !== product.category
+      ) {
+        item.description = product.description;
+        item.imageUrl = product.imageUrl;
+        item.category = product.category;
+      }
+    }
+
+    // If any price changed, update cart and abort checkout
+    if (priceChanged) {
+      cart.totalItems = cart.items.reduce((sum, item) => sum + item.quantity, 0);
+      cart.subtotal = cart.items.reduce((sum, item) => sum + item.quantity * item.basePrice, 0);
+      cart.totalDiscount = cart.items.reduce(
+        (sum, item) => sum + item.discountAmount * item.quantity,
+        0
+      );
+      cart.total = cart.items.reduce((sum, item) => sum + item.subtotal, 0);
+
+      cart.markModified('items');
+      await cart.save();
+
+      throw new ConflictError(
+        'Pricing has changed. Please review your cart before checkout.'
+      );
+    }
+  }
+
   async createOrder(
     tenantId: string,
     userId: string,
     data: CreateOrderDTO
   ): Promise<Order> {
+    // First, check and update cart pricing outside of order transaction
+    // This ensures cart updates persist even if order creation fails
+    const cartForValidation = await CartModel.findOne({
+      tenantId,
+      userId,
+      status: CartStatus.ACTIVE,
+    });
+
+    if (!cartForValidation || !cartForValidation.items || cartForValidation.items.length === 0) {
+      throw new BadRequestError('Cart is empty or already checked out');
+    }
+
+    // Validate pricing and update cart if needed (without transaction)
+    await this.revalidateCartPricingWithoutTransaction(tenantId, cartForValidation);
+
+    // Now start transaction for order creation
     const session = await mongoose.startSession();
     session.startTransaction();
 
     try {
+      // Re-fetch cart within transaction for order creation
       const cart = await CartModel.findOne({
         tenantId,
         userId,
@@ -43,7 +238,7 @@ export class OrderService {
         throw new BadRequestError('Cart is empty or already checked out');
       }
 
-      // Validate products and ensure we have complete snapshots
+      // Validate inventory availability
       for (const item of cart.items) {
         const product = await ProductModel.findOne({
           _id: item.productId,
@@ -59,18 +254,11 @@ export class OrderService {
             `Insufficient inventory for ${item.name}. Only ${product.inventory} available`
           );
         }
-
-        // Ensure cart item has complete product snapshot (for legacy carts)
-        if (!item.description || !item.imageUrl) {
-          item.description = product.description;
-          item.imageUrl = product.imageUrl;
-          item.category = product.category;
-        }
       }
 
       const orderNumber = await this.generateOrderNumber(tenantId);
 
-      // Create order with complete product snapshots from cart
+      // Create order with validated pricing from cart
       const order = new OrderModel({
         tenantId,
         userId,

@@ -53,11 +53,25 @@ export default function CheckoutClient() {
 
     const res = await createOrder(formData);
     if (res.error) {
-      setError(res.error);
+      // Check if it's a pricing conflict error
+      if (res.error.includes('Pricing has changed')) {
+        setError(
+          'Pricing has changed for one or more items in your cart. Please go back to review the updated prices.'
+        );
+        // Reload cart to get updated prices
+        await loadCart();
+      } else {
+        setError(res.error);
+      }
       setSubmitting(false);
     } else {
       router.push(`/orders/${res.data?.id}`);
     }
+  }
+
+  function handleBackToCart() {
+    // Navigate to cart page - SSR will fetch fresh data automatically
+    router.push('/cart?priceChanged=true');
   }
 
   if (loading) {
@@ -74,7 +88,7 @@ export default function CheckoutClient() {
         {/* Header */}
         <div className="mb-12">
           <button
-            onClick={() => router.push('/cart')}
+            onClick={handleBackToCart}
             className="text-sm text-[#9A9AA1] hover:text-white transition mb-3"
           >
             ← Back to cart
@@ -85,8 +99,30 @@ export default function CheckoutClient() {
         </div>
 
         {error && (
-          <div className="mb-6 border border-red-500/40 bg-red-500/10 rounded-lg p-4 text-sm text-red-400">
-            {error}
+          <div className={`mb-6 border rounded-lg p-4 text-sm ${
+            error.includes('Pricing has changed') 
+              ? 'border-yellow-500/40 bg-yellow-500/10 text-yellow-400'
+              : 'border-red-500/40 bg-red-500/10 text-red-400'
+          }`}>
+            <div className="flex items-start gap-3">
+              <span className="text-lg">
+                {error.includes('Pricing has changed') ? '⚠️' : '❌'}
+              </span>
+              <div className="flex-1">
+                <p className="font-medium mb-1">
+                  {error.includes('Pricing has changed') ? 'Price Update Required' : 'Error'}
+                </p>
+                <p className="mb-3">{error}</p>
+                {error.includes('Pricing has changed') && (
+                  <button
+                    onClick={handleBackToCart}
+                    className="text-sm font-medium underline hover:no-underline"
+                  >
+                    Go back to cart to review →
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
         )}
 
