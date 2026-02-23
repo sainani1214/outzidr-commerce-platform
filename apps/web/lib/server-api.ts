@@ -59,10 +59,9 @@ export async function apiRequest<T>(
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
       
-      // Handle 401 Unauthorized - token expired or invalid
-      // This will be caught by server components and redirect
-      if (response.status === 401) {
-        // For server-side requests, redirect immediately
+      // Don't attempt token refresh on server-side (SSR)
+      // Only redirect to login if authentication fails
+      if (response.status === 401 && includeAuth) {
         if (typeof window === 'undefined') {
           redirect('/login');
         }
@@ -86,14 +85,11 @@ export async function apiRequest<T>(
 
     const result = await response.json();
     
-    // Backend returns { success, data, pagination }
-    // Frontend expects { data, pagination }
     return {
       data: result.data,
       pagination: result.pagination,
     };
   } catch (error) {
-    // Re-throw NEXT_REDIRECT errors to allow Next.js to handle redirects
     if (error instanceof Error && error.message.includes('NEXT_REDIRECT')) {
       throw error;
     }

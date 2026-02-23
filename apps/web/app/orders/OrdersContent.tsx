@@ -2,17 +2,27 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { getOrders } from '../_actions/orders';
 import type { Order } from '@/lib/server-api';
 
 interface OrdersContentProps {
   initialOrders?: Order[] | null;
   initialError?: string;
+  pagination?: {
+    currentPage: number;
+    totalPages: number;
+    totalItems: number;
+    itemsPerPage: number;
+  };
+  currentPage: number;
 }
 
 export default function OrdersContent({
   initialOrders,
   initialError,
+  pagination,
+  currentPage,
 }: OrdersContentProps) {
   const router = useRouter();
   const [orders, setOrders] = useState<Order[]>(
@@ -143,6 +153,33 @@ export default function OrdersContent({
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Pagination */}
+        {pagination && pagination.totalPages > 1 && (
+          <div className="mt-8 flex items-center justify-center gap-2">
+            {currentPage > 1 && (
+              <Link
+                href={`/orders?page=${currentPage - 1}`}
+                className="px-4 py-2 rounded-lg text-sm font-medium transition-all bg-[#1F1F23] text-white border border-[#2A2A30] hover:bg-[#2A2A30]"
+              >
+                Previous
+              </Link>
+            )}
+            
+            <span className="px-4 py-2 text-sm text-[#9A9AA1]">
+              Page {currentPage} of {pagination.totalPages}
+            </span>
+
+            {currentPage < pagination.totalPages && (
+              <Link
+                href={`/orders?page=${currentPage + 1}`}
+                className="px-4 py-2 rounded-lg text-sm font-medium transition-all bg-[#1F1F23] text-white border border-[#2A2A30] hover:bg-[#2A2A30]"
+              >
+                Next
+              </Link>
+            )}
           </div>
         )}
       </div>

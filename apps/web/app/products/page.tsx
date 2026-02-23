@@ -79,7 +79,7 @@ export default async function ProductsPage({ searchParams }: PageProps) {
               ))}
             </div>
 
-            {pagination && pagination.totalPages > 1 && (
+            {pagination && (
               <div className="mt-12 flex items-center justify-center gap-2 flex-wrap">
                 {page > 1 && (
                   <Link
