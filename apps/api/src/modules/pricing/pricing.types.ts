@@ -9,6 +9,8 @@ export interface PricingRuleConditions {
   maxInventory?: number;
   minQuantity?: number;
   maxQuantity?: number;
+  validFrom?: Date;
+  validUntil?: Date;
 }
 
 export interface PricingRule {

@@ -1,8 +1,29 @@
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 
 const API_URL = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
-const TENANT_ID = process.env.TENANT_ID || process.env.NEXT_PUBLIC_TENANT_ID || 'tenant_1';
+
+function extractTenantSlugFromHost(host: string | null): string {
+  if (!host) return 'default';
+  
+  const hostname = host.split(':')[0];
+  
+  const parts = hostname.split('.');
+  
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    return 'default';
+  }
+  
+  if (parts.length >= 2 && parts[parts.length - 1] === 'localhost') {
+    return parts[0];
+  }
+  
+  if (parts.length > 2) {
+    return parts[0];
+  }
+  
+  return 'default';
+}
 
 export interface ApiResponse<T> {
   data?: T;
@@ -22,11 +43,30 @@ export async function getAuthToken(): Promise<string | undefined> {
   return cookieStore.get('auth_token')?.value;
 }
 
+export async function getTenantSlug(): Promise<string> {
+  const cookieStore = await cookies();
+  const storedSlug = cookieStore.get('tenant_slug')?.value;
+  
+  if (storedSlug) return storedSlug;
+  
+  const headersList = await headers();
+  const host = headersList.get('host');
+  
+  return extractTenantSlugFromHost(host);
+}
+
+export async function getTenantId(): Promise<string | undefined> {
+  const cookieStore = await cookies();
+  return cookieStore.get('tenant_id')?.value;
+}
+
 export async function createHeaders(includeAuth = true): Promise<HeadersInit> {
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
-    'x-tenant-id': TENANT_ID,
   };
+
+  const tenantSlug = await getTenantSlug();
+  headers['x-tenant-slug'] = tenantSlug;
 
   if (includeAuth) {
     const token = await getAuthToken();

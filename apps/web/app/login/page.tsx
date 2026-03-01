@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { loginAction } from '../_actions/auth';
+import { apiClient } from '@/lib/api-client';
 import { colors } from '@/styles/colors';
 import { useToast } from '../_providers/ToastProvider';
 
@@ -21,13 +22,13 @@ function LoginForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    
     setLoading(true);
 
     const result = await loginAction(email, password);
 
     if (result.success) {
       showSuccess('Login Successful!', 'Welcome back to Outzidr Commerce');
-      // Small delay to show the toast before navigation
       setTimeout(() => {
         router.push(redirectTo);
         router.refresh();

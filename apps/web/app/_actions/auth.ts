@@ -1,10 +1,31 @@
 'use server';
 
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 
 const API_URL = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
-const TENANT_ID = process.env.TENANT_ID || process.env.NEXT_PUBLIC_TENANT_ID || 'tenant_1';
+
+function extractTenantSlugFromHost(host: string | null): string {
+  if (!host) return 'default';
+  
+  const hostname = host.split(':')[0];
+  
+  const parts = hostname.split('.');
+  
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    return 'default';
+  }
+  
+  if (parts.length >= 2 && parts[parts.length - 1] === 'localhost') {
+    return parts[0];
+  }
+  
+  if (parts.length > 2) {
+    return parts[0];
+  }
+  
+  return 'default';
+}
 
 interface AuthResponse {
   success: boolean;
@@ -17,11 +38,15 @@ export async function loginAction(
   password: string
 ): Promise<AuthResponse> {
   try {
+    const headersList = await headers();
+    const host = headersList.get('host');
+    const tenantSlug = extractTenantSlugFromHost(host);
+
     const response = await fetch(`${API_URL}/auth/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-tenant-id': TENANT_ID,
+        'x-tenant-slug': tenantSlug,
       },
       body: JSON.stringify({ email, password }),
     });
@@ -46,6 +71,14 @@ export async function loginAction(
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
         maxAge: 60 * 60 * 24 * 7,
+        path: '/',
+      });
+
+      cookieStore.set('tenant_slug', tenantSlug, {
+        httpOnly: false,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 60 * 60 * 24 * 365,
         path: '/',
       });
 
@@ -82,6 +115,10 @@ export async function registerAction(
   confirmPassword: string
 ): Promise<AuthResponse> {
   try {
+    const headersList = await headers();
+    const host = headersList.get('host');
+    const tenantSlug = extractTenantSlugFromHost(host);
+
     if (password !== confirmPassword) {
       return {
         success: false,
@@ -100,7 +137,7 @@ export async function registerAction(
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-tenant-id': TENANT_ID,
+        'x-tenant-slug': tenantSlug,
       },
       body: JSON.stringify({ name, email, password, confirmPassword }),
     });
@@ -125,6 +162,14 @@ export async function registerAction(
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
         maxAge: 60 * 60 * 24 * 7,
+        path: '/',
+      });
+
+      cookieStore.set('tenant_slug', tenantSlug, {
+        httpOnly: false,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 60 * 60 * 24 * 365,
         path: '/',
       });
 
@@ -159,6 +204,7 @@ export async function logoutAction(): Promise<{ success: boolean }> {
   
   cookieStore.delete('auth_token');
   cookieStore.delete('refresh_token');
+  cookieStore.delete('tenant_slug');
 
   return { success: true };
 }
@@ -180,4 +226,5 @@ export async function clearAuthCookies(): Promise<void> {
   const cookieStore = await cookies();
   cookieStore.delete('auth_token');
   cookieStore.delete('refresh_token');
+  cookieStore.delete('tenant_slug');
 }

@@ -205,9 +205,41 @@ export default function CartContent({
                           </button>
                         </div>
 
-                        <p className="text-sm text-[#9A9AA1] mb-4">
-                          ${item.finalPrice.toFixed(2)}
-                        </p>
+                        {/* Price with discount indicator */}
+                        <div className="mb-4">
+                          {item.discountAmount > 0 ? (
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm text-[#9A9AA1] line-through">
+                                ${item.basePrice.toFixed(2)}
+                              </span>
+                              <span className="text-sm font-medium text-[#2ECC71]">
+                                ${item.finalPrice.toFixed(2)}
+                              </span>
+                              <span className="text-xs px-2 py-0.5 rounded-full bg-[#2ECC71]/10 text-[#2ECC71] font-medium">
+                                {((item.discountAmount / item.basePrice) * 100).toFixed(0)}% OFF
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-sm text-[#9A9AA1]">
+                              ${item.finalPrice.toFixed(2)}
+                            </span>
+                          )}
+                          
+                          {/* Applied pricing rules */}
+                          {item.appliedRules && item.appliedRules.length > 0 && (
+                            <div className="mt-2 flex flex-wrap gap-1">
+                              {item.appliedRules.map((rule, idx) => (
+                                <span
+                                  key={idx}
+                                  className="text-xs px-2 py-1 rounded-md bg-blue-500/10 text-blue-400 border border-blue-500/20"
+                                  title={rule}
+                                >
+                                  🎁 {rule}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
 
                         <div className="flex items-center justify-between">
                           {/* Qty */}
@@ -258,16 +290,50 @@ export default function CartContent({
                 <div className="flex justify-between text-[#9A9AA1]">
                   <span>Subtotal</span>
                   <span className="text-white">
-                    ${calculateTotal().toFixed(2)}
+                    ${cart.subtotal.toFixed(2)}
                   </span>
                 </div>
+                
+                {cart.totalDiscount > 0 && (
+                  <>
+                    <div className="flex justify-between">
+                      <span className="text-[#2ECC71]">Total Savings</span>
+                      <span className="text-[#2ECC71] font-medium">
+                        −${cart.totalDiscount.toFixed(2)}
+                      </span>
+                    </div>
+                    
+                    {/* Show unique applied rules */}
+                    {(() => {
+                      const uniqueRules = new Set<string>();
+                      cart.items.forEach(item => {
+                        item.appliedRules?.forEach(rule => uniqueRules.add(rule));
+                      });
+                      
+                      if (uniqueRules.size > 0) {
+                        return (
+                          <div className="pt-2 pb-2 space-y-1">
+                            <p className="text-xs text-[#9A9AA1] mb-1">Active Discounts:</p>
+                            {Array.from(uniqueRules).map((rule, idx) => (
+                              <div key={idx} className="flex items-center gap-1.5 text-xs text-[#2ECC71]">
+                                <span>✓</span>
+                                <span>{rule}</span>
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      }
+                    })()}
+                  </>
+                )}
+                
                 <div className="flex justify-between text-[#9A9AA1]">
                   <span>Shipping</span>
                   <span>Calculated at checkout</span>
                 </div>
                 <div className="border-t border-[#2A2A30] pt-4 flex justify-between font-medium">
                   <span>Total</span>
-                  <span>${calculateTotal().toFixed(2)}</span>
+                  <span>${cart.total.toFixed(2)}</span>
                 </div>
               </div>
 

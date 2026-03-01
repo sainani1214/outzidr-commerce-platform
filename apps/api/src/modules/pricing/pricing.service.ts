@@ -67,6 +67,15 @@ class PricingService {
     quantity: number
   ): boolean {
     const { conditions } = rule;
+    const now = new Date();
+
+    if (conditions.validFrom && now < new Date(conditions.validFrom)) {
+      return false;
+    }
+
+    if (conditions.validUntil && now > new Date(conditions.validUntil)) {
+      return false;
+    }
 
     if (conditions.minInventory !== undefined && inventory < conditions.minInventory) {
       return false;

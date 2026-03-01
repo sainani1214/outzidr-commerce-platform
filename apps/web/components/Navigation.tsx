@@ -34,6 +34,7 @@ export default function Navigation() {
     { href: '/products', label: 'Products' },
     { href: '/cart', label: 'Cart' },
     { href: '/orders', label: 'Orders' },
+    { href: '/tenant-setup', label: 'Tenant Setup' },
   ];
 
   const handleLogout = async () => {

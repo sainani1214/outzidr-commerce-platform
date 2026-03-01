@@ -4,6 +4,7 @@ import Link from 'next/link';
 import ProductCard from './ProductCard';
 import { isAuthenticated } from '@/app/_actions/auth';
 import { redirect } from 'next/navigation';
+import PricingRulesBanner from '@/components/PricingRulesBanner';
 
 
 interface PageProps {
@@ -67,6 +68,9 @@ export default async function ProductsPage({ searchParams }: PageProps) {
       </section>
 
       <section className="px-4 sm:px-8 pb-24 max-w-7xl mx-auto">
+        {/* Pricing Rules Banner */}
+        <PricingRulesBanner />
+        
         {products.length === 0 ? (
           <div className="text-center py-12">
             <p style={{ color: colors.text.secondary }}>No products found</p>

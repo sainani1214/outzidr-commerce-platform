@@ -46,6 +46,8 @@ const PricingRuleSchema = new Schema<IPricingRuleDocument>(
       maxInventory: { type: Number, min: 0 },
       minQuantity: { type: Number, min: 0 },
       maxQuantity: { type: Number, min: 0 },
+      validFrom: { type: Date },
+      validUntil: { type: Date },
     },
     isActive: {
       type: Boolean,

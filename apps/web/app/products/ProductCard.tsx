@@ -77,6 +77,15 @@ export default function ProductCard({ product }: Props) {
               No image
             </div>
           )}
+          
+          {/* Clearance Badge for low stock items */}
+          {product.inventory > 0 && product.inventory <= 20 && (
+            <div className="absolute top-3 left-3">
+              <span className="px-2 py-1 rounded-md bg-red-500/90 text-white text-xs font-bold shadow-lg">
+                20% OFF - Clearance
+              </span>
+            </div>
+          )}
         </div>
       </Link>
 

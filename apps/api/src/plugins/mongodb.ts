@@ -1,6 +1,7 @@
 import fp from 'fastify-plugin';
 import { FastifyInstance } from 'fastify';
 import mongoose from 'mongoose';
+import { tenantService } from '../modules/tenants/tenant.service';
 
 export const mongoPlugin = fp(async (app: FastifyInstance) => {
   const uri = app.config.MONGODB_URI;
@@ -13,12 +14,19 @@ export const mongoPlugin = fp(async (app: FastifyInstance) => {
   if (mongoose.connection.readyState === 1) {
     app.log.info('MongoDB already connected (using existing connection)');
     app.decorate('mongo', mongoose);
+    // Ensure default tenant exists
+    await tenantService.ensureDefaultTenant();
+    app.log.info('Default tenant verified');
     return;
   }
 
   await mongoose.connect(uri);
 
   app.log.info('MongoDB connected');
+
+  // Ensure default tenant exists
+  await tenantService.ensureDefaultTenant();
+  app.log.info('Default tenant created/verified');
 
   app.decorate('mongo', mongoose);
 });

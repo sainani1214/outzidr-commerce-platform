@@ -4,7 +4,27 @@
  */
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
-const TENANT_ID = process.env.NEXT_PUBLIC_TENANT_ID || 'tenant_1';
+
+function extractTenantSlugFromDomain(): string {
+  if (typeof window === 'undefined') return 'default';
+  
+  const hostname = window.location.hostname;
+  const parts = hostname.split('.');
+  
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    return 'default';
+  }
+  
+  if (parts.length >= 2 && parts[parts.length - 1] === 'localhost') {
+    return parts[0];
+  }
+  
+  if (parts.length > 2) {
+    return parts[0];
+  }
+  
+  return 'default';
+}
 
 export interface ApiError {
   error: string;
@@ -26,18 +46,60 @@ export interface ApiResponse<T> {
 
 class ApiClient {
   private baseURL: string;
-  private tenantId: string;
+  private tenantSlug: string;
 
   constructor() {
     this.baseURL = API_URL;
-    this.tenantId = TENANT_ID;
+    this.tenantSlug = extractTenantSlugFromDomain();
+  }
+
+  getTenantSlug(): string {
+    return this.tenantSlug;
+  }
+
+  refreshTenantSlug(): void {
+    this.tenantSlug = extractTenantSlugFromDomain();
+  }
+
+  setTenantSlug(slug: string): void {
+    this.tenantSlug = slug;
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('tenantSlug', slug);
+    }
+  }
+
+  clearTenantSlug(): void {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('tenantSlug');
+    }
+    this.tenantSlug = 'default';
+  }
+
+  setTenantId(tenantId: string): void {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('tenantId', tenantId);
+    }
+  }
+
+  getTenantId(): string | null {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('tenantId');
+    }
+    return null;
+  }
+
+  clearTenantId(): void {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('tenantId');
+    }
   }
 
   private getHeaders(includeAuth: boolean = true): HeadersInit {
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
-      'x-tenant-id': this.tenantId,
     };
+
+    headers['x-tenant-slug'] = this.tenantSlug;
 
     if (includeAuth && typeof window !== 'undefined') {
       const token = localStorage.getItem('accessToken');
@@ -208,6 +270,27 @@ class ApiClient {
 
   async getOrder(id: string) {
     return this.request<ApiResponse<any>>(`/orders/${id}`);
+  }
+
+  async createTenant(data: { name: string; metadata?: Record<string, any> }) {
+    return this.request<ApiResponse<any>>('/tenants', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }, false);
+  }
+
+  async getTenants(params?: { page?: number; limit?: number; search?: string }) {
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+    if (params?.search) queryParams.append('search', params.search);
+
+    const query = queryParams.toString();
+    return this.request<ApiResponse<any[]>>(`/tenants${query ? `?${query}` : ''}`);
+  }
+
+  async getTenant(tenantId: string) {
+    return this.request<ApiResponse<any>>(`/tenants/${tenantId}`, {}, false);
   }
 }
 

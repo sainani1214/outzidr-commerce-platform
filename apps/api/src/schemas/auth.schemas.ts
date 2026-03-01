@@ -1,16 +1,6 @@
 export const registerSchema = {
   tags: ['auth'],
   description: 'Register a new user',
-  headers: {
-    type: 'object',
-    required: ['x-tenant-id'],
-    properties: {
-      'x-tenant-id': { 
-        type: 'string',
-        description: 'Tenant identifier',
-      },
-    },
-  },
   body: {
     type: 'object',
     required: ['email', 'password', 'confirmPassword', 'name'],
@@ -26,16 +16,6 @@ export const registerSchema = {
 export const loginSchema = {
   tags: ['auth'],
   description: 'Login with email and password',
-  headers: {
-    type: 'object',
-    required: ['x-tenant-id'],
-    properties: {
-      'x-tenant-id': { 
-        type: 'string',
-        description: 'Tenant identifier',
-      },
-    },
-  },
   body: {
     type: 'object',
     required: ['email', 'password'],
@@ -49,29 +29,9 @@ export const loginSchema = {
 export const refreshTokenSchema = {
   tags: ['auth'],
   description: 'Refresh access token',
-  headers: {
-    type: 'object',
-    required: ['x-tenant-id'],
-    properties: {
-      'x-tenant-id': { 
-        type: 'string',
-        description: 'Tenant identifier',
-      },
-    },
-  },
 } as const;
 
 export const logoutSchema = {
   tags: ['auth'],
   description: 'Logout and revoke refresh token',
-  headers: {
-    type: 'object',
-    required: ['x-tenant-id'],
-    properties: {
-      'x-tenant-id': { 
-        type: 'string',
-        description: 'Tenant identifier',
-      },
-    },
-  },
 } as const;

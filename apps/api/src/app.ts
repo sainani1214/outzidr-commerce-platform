@@ -12,12 +12,17 @@ import { mongoPlugin } from './plugins/mongodb';
 import { tenantPlugin } from './plugins/tenant';
 import { authGuard, requireAuth } from './plugins/authGuard';
 import { authRoutes } from './modules/auth/auth.routes';
+import { tenantRoutes } from './modules/tenants/tenant.routes';
 import { protectedRoutes } from './routes/protected.routes';
+import { CommonSchemas } from './schemas';
 
 export async function buildApp(): Promise<FastifyInstance> {
   const app = fastify({
     logger: true,
   });
+
+  // Register shared schemas for $ref usage
+  app.addSchema(CommonSchemas.tenantHeaderSchema);
 
   // Global error handler 
   await app.register(errorHandler);
@@ -56,7 +61,7 @@ export async function buildApp(): Promise<FastifyInstance> {
       max: 1000,
       timeWindow: '15 minutes',
       keyGenerator: (req) => {
-        return `${req.ip}:${req.headers['x-tenant-id'] || 'unknown'}`;
+        return `${req.ip}:${req.headers['x-tenant-slug'] || 'unknown'}`;
       },
       errorResponseBuilder: (req, context) => {
         return {
@@ -74,8 +79,8 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(authGuard);
   await app.register(requireAuth);
 
-  // Register routes with versioned prefix
   await app.register(authRoutes, { prefix: `${API_BASE}/auth` });
+  await app.register(tenantRoutes, { prefix: API_BASE });
   await app.register(protectedRoutes, { prefix: API_BASE });
 
   // Health check (unversioned)

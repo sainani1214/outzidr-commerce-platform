@@ -34,14 +34,14 @@ export async function registerSwagger(app: FastifyInstance) {
           },
         },
         parameters: {
-          tenantId: {
-            name: 'x-tenant-id',
+          tenantSlug: {
+            name: 'x-tenant-slug',
             in: 'header',
-            required: true,
-            description: 'Tenant identifier for multi-tenant isolation',
+            required: false,
+            description: 'Optional tenant slug. If not provided, will be extracted from subdomain',
             schema: {
               type: 'string',
-              example: 'tenant_1',
+              example: 'electronics',
             },
           },
         },

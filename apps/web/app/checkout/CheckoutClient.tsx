@@ -248,9 +248,18 @@ export default function CheckoutClient() {
                 <div className="flex justify-between text-[#9A9AA1]">
                   <span>Subtotal</span>
                   <span className="text-white">
-                    ${calculateTotal().toFixed(2)}
+                    ${cart?.subtotal.toFixed(2)}
                   </span>
                 </div>
+
+                {cart && cart.totalDiscount > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-[#2ECC71]">Discount</span>
+                    <span className="text-[#2ECC71] font-medium">
+                      −${cart.totalDiscount.toFixed(2)}
+                    </span>
+                  </div>
+                )}
 
                 <div className="flex justify-between text-[#9A9AA1]">
                   <span>Shipping</span>
@@ -259,7 +268,7 @@ export default function CheckoutClient() {
 
                 <div className="flex justify-between font-medium text-base pt-3">
                   <span>Total</span>
-                  <span>${calculateTotal().toFixed(2)}</span>
+                  <span>${cart?.total.toFixed(2)}</span>
                 </div>
               </div>
             </div>

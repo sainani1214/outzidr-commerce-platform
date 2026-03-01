@@ -6,12 +6,11 @@ export const tenantHeaderSchema = {
   $id: 'tenantHeader',
   type: 'object',
   properties: {
-    'x-tenant-id': {
+    'x-tenant-slug': {
       type: 'string',
-      description: 'Tenant identifier for multi-tenant isolation',
+      description: 'Tenant slug identifier for multi-tenant isolation',
     },
   },
-  required: ['x-tenant-id'],
 } as const;
 
 export const CommonSchemas = {

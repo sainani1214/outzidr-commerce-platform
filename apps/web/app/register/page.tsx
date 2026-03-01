@@ -1,13 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { registerAction } from '../_actions/auth';
+import { apiClient } from '@/lib/api-client';
 import { colors } from '@/styles/colors';
+import { useToast } from '../_providers/ToastProvider';
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { showSuccess, showError } = useToast();
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -47,7 +50,6 @@ export default function RegisterPage() {
     e.preventDefault();
     setError('');
 
-    // Validate password
     const errors = validatePassword(password);
     if (errors.length > 0) {
       setError('Password does not meet requirements');
@@ -55,7 +57,6 @@ export default function RegisterPage() {
       return;
     }
 
-    // Validate password match
     if (password !== confirmPassword) {
       setError('Passwords do not match');
       return;
@@ -66,10 +67,14 @@ export default function RegisterPage() {
     const result = await registerAction(name, email, password, confirmPassword);
 
     if (result.success) {
-      router.push('/products');
-      router.refresh();
+      showSuccess('Registration Successful!', 'Welcome to Outzidr Commerce');
+      setTimeout(() => {
+        router.push('/products');
+        router.refresh();
+      }, 500);
     } else {
       setError(result.error || 'Registration failed');
+      showError('Registration Failed', result.error || 'Please try again.');
       setLoading(false);
     }
   };

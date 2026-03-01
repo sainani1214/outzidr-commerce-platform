@@ -48,12 +48,67 @@ export class CartService {
         cart.total = 0;
         cart.status = CartStatus.ACTIVE;
         await cart.save();
+      } else if (cart.items.length > 0) {
+        await this.recalculateCartPricing(tenantId, cart);
       }
 
       return cart.toCartObject();
     } catch (error: any) {
       console.error('Error in getCart:', error);
       throw error;
+    }
+  }
+
+  private async recalculateCartPricing(tenantId: string, cart: ICartDocument): Promise<void> {
+    let priceChanged = false;
+
+    for (const item of cart.items) {
+      const product = await productService.getProductById(tenantId, item.productId);
+
+      if (!product.isActive) {
+        continue;
+      }
+
+      const priceResult = await pricingService.calculatePrice(tenantId, {
+        productId: item.productId,
+        quantity: item.quantity,
+        basePrice: product.price,
+        inventory: product.inventory,
+      });
+
+      const calculatedFinalPricePerItem = priceResult.finalPrice / item.quantity;
+      const calculatedDiscountPerItem = priceResult.discountAmount / item.quantity;
+      const calculatedSubtotal = priceResult.finalPrice;
+
+      const storedFinalPrice = Number(item.finalPrice.toFixed(2));
+      const newFinalPrice = Number(calculatedFinalPricePerItem.toFixed(2));
+      const storedBasePrice = Number(item.basePrice.toFixed(2));
+      const newBasePrice = Number(product.price.toFixed(2));
+
+      if (storedFinalPrice !== newFinalPrice || storedBasePrice !== newBasePrice) {
+        priceChanged = true;
+
+        item.basePrice = product.price;
+        item.finalPrice = calculatedFinalPricePerItem;
+        item.discountAmount = calculatedDiscountPerItem;
+        item.subtotal = calculatedSubtotal;
+        item.appliedRules = priceResult.appliedRules.map((rule) => rule.ruleName);
+      }
+
+      if (
+        item.description !== product.description ||
+        item.imageUrl !== product.imageUrl ||
+        item.category !== product.category
+      ) {
+        item.description = product.description;
+        item.imageUrl = product.imageUrl;
+        item.category = product.category;
+      }
+    }
+
+    if (priceChanged) {
+      this.calculateCartTotals(cart);
+      await cart.save();
     }
   }
 
