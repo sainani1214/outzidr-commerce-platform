@@ -14,6 +14,7 @@ import { authGuard, requireAuth } from './plugins/authGuard';
 import { authRoutes } from './modules/auth/auth.routes';
 import { tenantRoutes } from './modules/tenants/tenant.routes';
 import { protectedRoutes } from './routes/protected.routes';
+import adminRoutes from './routes/admin.routes';
 import { CommonSchemas } from './schemas';
 
 export async function buildApp(): Promise<FastifyInstance> {
@@ -82,6 +83,9 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(authRoutes, { prefix: `${API_BASE}/auth` });
   await app.register(tenantRoutes, { prefix: API_BASE });
   await app.register(protectedRoutes, { prefix: API_BASE });
+  
+  // Admin routes (no tenant isolation)
+  await app.register(adminRoutes, { prefix: API_BASE });
 
   // Health check (unversioned)
   app.get(
